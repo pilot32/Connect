@@ -1,0 +1,88 @@
+# ==========================================
+# Node.js / JavaScript
+# ==========================================
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.pnpm-debug.log*
+**/.env
+**/.env.local
+**/.env.*.local
+**/dist/
+**/.next/
+**/.nuxt/
+
+# ==========================================
+# Flutter / Dart
+# ==========================================
+# Compiled plugin binaries
+**/build/
+
+# Directory producting by pub inside your flutter apps
+**/.dart_tool/
+**/.packages
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/pubspec.lock
+
+# Web specific ignored files
+**/.plugin_symlinks/
+
+# Symbolica / debug links
+**/.pub-cache/
+**/.pub/
+
+# Generated files (if using build_runner)
+# Remove the hash sign if you do not want to commit generated dart files
+# **/*.gr.dart
+# **/*.g.dart
+
+# ==========================================
+# Platform Specifics (Android / iOS)
+# ==========================================
+# Android
+**/android/**/local.properties
+**/android/.gradle/
+**/android/app/protobuf/
+**/android/app/libs/
+**/*.jks
+**/*.keystore
+**/android/key.properties
+
+# iOS / macOS
+**/ios/.generated/
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/GeneratedPluginRegistrant.h
+**/ios/Flutter/GeneratedPluginRegistrant.m
+**/ios/Flutter/app.framework
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flash/
+**/.xcworkspace/
+**/*.moved-aside
+**/*.pbxuser
+**/*.mode1v3
+**/*.mode2v3
+**/*.perspectivev3
+**/Podfile.lock
+
+# ==========================================
+# Operating Systems & Tools
+# ==========================================
+# OS files
+**/.DS_Store
+**/Thumbs.db
+
+# IDEs and Editors
+**/.idea/
+**/.vscode/
+**/*.suo
+**/*.ntvs*
+**/*.njsproj
+**/*.sln
+**/*.sw?
