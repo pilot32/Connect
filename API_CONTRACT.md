@@ -1,8 +1,14 @@
-# API Contract — Auth
+# API Contract
 
 Base URL (local dev): `http://localhost:3000`
 
-Covers the currently implemented endpoints in `connectappbe/src/routes/auth.routes.js` / `connectappbe/src/controllers/auth.controller.js`. Other feature routers (profile, verification, directory, connections, feed) are not implemented yet — see [AGENTS.md](AGENTS.md).
+Covers the currently implemented endpoints: auth, profile (read-only), connections. Verification, directory, and feed routers are not implemented yet — see [AGENTS.md](AGENTS.md).
+
+All endpoints below except `POST /auth/signup` and `POST /auth/login` require `Authorization: Bearer <token>` (see Notes at the bottom of the Auth section).
+
+---
+
+# Auth
 
 ---
 
@@ -181,3 +187,198 @@ Content-Type: application/json
 - No email verification, OTP, or gov-email gate on signup/login in this pass — see [FEATURES.md](FEATURES.md) for that as a deferred item.
 - Login (`POST /auth/login`) is unaffected by the profile/ID-card changes — still plain `application/json` with just `email`/`password`.
 - The ID card photo is only *captured and stored* at signup — nothing in this pass reviews it, sets a verified status, or shows a badge (that's still deferred, see [FEATURES.md](FEATURES.md)).
+
+---
+
+# Profile (read-only)
+
+All endpoints below require `Authorization: Bearer <token>`.
+
+## GET /profile/me
+
+The authenticated user's own profile.
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "user": { "id": "074c04eb-1e8c-4e63-97a6-fc2cc4f31683", "email": "officerA@example.com" },
+  "profile": {
+    "name": "Officer A",
+    "photoUrl": null,
+    "designation": "DM",
+    "service": "IAS",
+    "department": "Revenue",
+    "stateOrCadre": "Karnataka",
+    "yearsInService": 5,
+    "bio": null
+  }
+}
+```
+
+`401 Unauthorized` — missing/invalid token
+```json
+{ "error": "Missing token" }
+```
+
+`404 Not Found` — no profile exists for this user (shouldn't happen given signup always creates one, but a real code path)
+```json
+{ "error": "Profile not found" }
+```
+
+## GET /profile/:id
+
+Any other user's public profile, looked up by user id.
+
+**Responses**
+
+`200 OK` — same shape as `GET /profile/me`, but `user` only contains `{ "id" }` — **no email**. Email is the login credential and is only ever returned for the requester's own account.
+```json
+{
+  "user": { "id": "421cadfb-8fd4-4141-bc33-0f6805dd29c5" },
+  "profile": {
+    "name": "Officer B",
+    "photoUrl": null,
+    "designation": "SP",
+    "service": "IPS",
+    "department": "Police",
+    "stateOrCadre": "Maharashtra",
+    "yearsInService": 3,
+    "bio": null
+  }
+}
+```
+
+`400 Bad Request` — `:id` isn't a valid UUID
+```json
+{ "error": "Invalid user id" }
+```
+
+`404 Not Found` — no user/profile exists for that id
+```json
+{ "error": "Profile not found" }
+```
+
+Neither endpoint ever returns `idCardPhotoUrl` — private verification asset.
+
+---
+
+# Connections
+
+All endpoints below require `Authorization: Bearer <token>`.
+
+## POST /connections/request/:userId
+
+Send a connection request to another user.
+
+**Responses**
+
+`201 Created`
+```json
+{
+  "requestId": "c4f56802-49f1-4974-be9b-e13000efacf5",
+  "status": "pending",
+  "createdAt": "2026-08-12T20:09:35.127Z"
+}
+```
+
+`400 Bad Request` — `:userId` isn't a valid UUID, or equals the requester's own id
+```json
+{ "error": "Invalid user id" }
+```
+```json
+{ "error": "Cannot send a connection request to yourself" }
+```
+
+`404 Not Found` — target user doesn't exist
+```json
+{ "error": "User not found" }
+```
+
+`409 Conflict` — a `Connection` row already exists between these two users, in either direction, regardless of status (pending/accepted/declined). Re-requesting after a decline isn't supported yet.
+```json
+{ "error": "A connection already exists between these users" }
+```
+
+## POST /connections/:requestId/accept
+
+Accept a pending request. Only the recipient may call this.
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "requestId": "c4f56802-49f1-4974-be9b-e13000efacf5",
+  "status": "accepted",
+  "updatedAt": "2026-08-12T20:10:05.833Z"
+}
+```
+
+`400 Bad Request` — `:requestId` isn't a valid UUID
+```json
+{ "error": "Invalid request id" }
+```
+
+`403 Forbidden` — authenticated user isn't the recipient of this request
+```json
+{ "error": "Only the recipient can respond to this request" }
+```
+
+`404 Not Found` — no such connection request
+```json
+{ "error": "Connection request not found" }
+```
+
+`409 Conflict` — request isn't currently `pending` (already accepted or declined)
+```json
+{ "error": "Request is already accepted" }
+```
+
+## POST /connections/:requestId/decline
+
+Decline a pending request. Same authorization/state rules and error shapes as accept, sets `status` to `"declined"`.
+
+## GET /connections
+
+"My Network" — all accepted connections involving the current user.
+
+**Responses**
+
+`200 OK`
+```json
+[
+  {
+    "connectionId": "c4f56802-49f1-4974-be9b-e13000efacf5",
+    "since": "2026-08-12T20:10:05.833Z",
+    "user": {
+      "id": "421cadfb-8fd4-4141-bc33-0f6805dd29c5",
+      "profile": { "name": "Officer B", "photoUrl": null, "designation": "SP", "service": "IPS", "department": "Police", "stateOrCadre": "Maharashtra", "yearsInService": 3, "bio": null }
+    }
+  }
+]
+```
+`user` is always the *other* party in the connection (no email, same as `GET /profile/:id`).
+
+## GET /connections/requests
+
+Pending requests, split by direction — drives the accept/decline UI.
+
+**Responses**
+
+`200 OK`
+```json
+{
+  "incoming": [
+    {
+      "requestId": "496335f3-9b80-4f8a-9e13-5266a5d187f9",
+      "status": "pending",
+      "createdAt": "2026-08-12T20:10:42.587Z",
+      "user": { "id": "074c04eb-1e8c-4e63-97a6-fc2cc4f31683", "profile": { "...": "..." } }
+    }
+  ],
+  "outgoing": []
+}
+```
+`incoming` = requests sent *to* the current user (actionable via accept/decline). `outgoing` = requests the current user sent, awaiting the other party.

@@ -1,6 +1,6 @@
 # Data Entities
 
-Current data model for the MVP. `User` and `Profile` below match the live `connectappbe/prisma/schema.prisma` — everything else is still a planning reference and may shift once implemented.
+Current data model for the MVP. `User`, `Profile`, and `Connection` below match the live `connectappbe/prisma/schema.prisma` — `Post` is still a planning reference and may shift once implemented.
 
 ---
 
@@ -42,20 +42,22 @@ Public-facing professional profile, one-to-one with User. Created together with 
 
 ## Connection
 
-Represents a connection request between two users and its state.
+Represents a connection request between two users and its state (implemented — `GET/POST /connections/*`, see [API_CONTRACT.md](API_CONTRACT.md)).
 
 | Field | Type | Notes |
 |---|---|---|
 | id | UUID | Primary key |
 | requester_id | UUID | FK → User |
 | recipient_id | UUID | FK → User |
-| status | enum | `pending` / `accepted` / `declined` |
+| status | enum (`connection_status`) | `pending` / `accepted` / `declined` |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
 Notes:
-- Unique constraint on (requester_id, recipient_id) to prevent duplicate requests.
-- "My Network" view = all Connections where status = accepted and the current user is either requester or recipient.
+- Unique constraint on (requester_id, recipient_id) — but request creation also checks the reverse pair `(recipient_id, requester_id)` in application code, so only one `Connection` row can ever exist between two users regardless of direction.
+- DB check constraint `requester_id <> recipient_id` — can't connect to yourself.
+- Re-requesting after a decline isn't supported yet — any existing row (any status) blocks a new request between the same pair.
+- "My Network" view (`GET /connections`) = all Connections where status = accepted and the current user is either requester or recipient.
 
 ---
 

@@ -17,6 +17,9 @@ model User {
   updatedAt      DateTime @updatedAt @map("updated_at")
   profile        Profile?
 
+  connectionsSent     Connection[] @relation("ConnectionRequester")
+  connectionsReceived Connection[] @relation("ConnectionRecipient")
+
   @@map("users")
 }
 
@@ -36,4 +39,26 @@ model Profile {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("profiles")
+}
+
+enum ConnectionStatus {
+  pending
+  accepted
+  declined
+
+  @@map("connection_status")
+}
+
+model Connection {
+  id          String           @id @default(uuid()) @db.Uuid
+  requesterId String           @map("requester_id") @db.Uuid
+  recipientId String           @map("recipient_id") @db.Uuid
+  requester   User             @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient   User             @relation("ConnectionRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  status      ConnectionStatus @default(pending)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@unique([requesterId, recipientId])
+  @@map("connections")
 }

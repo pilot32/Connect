@@ -3,6 +3,7 @@ const prisma = require('../config/db');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
 const { uploadImageBuffer } = require('../utils/imageUpload');
+const { serializeUser, serializeProfile } = require('../utils/serializers');
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -18,23 +19,6 @@ const signupSchema = credentialsSchema.extend({
   yearsInService: z.coerce.number().int().nonnegative(),
   bio: z.string().optional(),
 });
-
-function serializeUser(user) {
-  return { id: user.id, email: user.email };
-}
-
-function serializeProfile(profile) {
-  return {
-    name: profile.name,
-    photoUrl: profile.photoUrl,
-    designation: profile.designation,
-    service: profile.service,
-    department: profile.department,
-    stateOrCadre: profile.stateOrCadre,
-    yearsInService: profile.yearsInService,
-    bio: profile.bio,
-  };
-}
 
 async function signup(req, res, next) {
   try {
