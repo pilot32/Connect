@@ -1,4 +1,4 @@
-# GovConnect (Working Title)
+# Connect 
 
 A LinkedIn-style professional networking mobile app exclusively for government officials — IAS, IPS, IFS, and other state/central service officers — to connect, discover peers by department/state/service, and share professional updates within a verified network.
 
