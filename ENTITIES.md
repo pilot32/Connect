@@ -1,6 +1,6 @@
 # Data Entities
 
-Current data model for the MVP. `User`, `Profile`, and `Connection` below match the live `connectappbe/prisma/schema.prisma` — `Post` is still a planning reference and may shift once implemented.
+Current data model for the MVP. `User`, `Profile`, `Connection`, and `Post` below all match the live `connectappbe/prisma/schema.prisma`.
 
 ---
 
@@ -63,19 +63,20 @@ Notes:
 
 ## Post
 
-Text-only feed post authored by a user.
+Feed post authored by a user: text + an optional photo (implemented — `GET/POST /feed`, see [API_CONTRACT.md](API_CONTRACT.md)).
 
 | Field | Type | Notes |
 |---|---|---|
 | id | UUID | Primary key |
 | author_id | UUID | FK → User |
-| content | text | Text content, no rich media in MVP |
+| content | text | Required, 1-2000 chars (trimmed) |
+| photo_url | text | Nullable — Cloudinary URL, optional per post |
 | created_at | timestamp | Used for chronological feed ordering |
 | updated_at | timestamp | |
 
 Notes:
 - No likes/comments tables in MVP (explicitly out of scope) — feed reads are author + connections only.
-- Feed query = Posts where author_id is in the current user's accepted Connections (+ optionally self).
+- Feed query (`GET /feed`) = Posts where author_id is in the current user's accepted Connections, **plus the current user's own posts**.
 
 ---
 

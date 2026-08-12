@@ -61,8 +61,8 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 - "My Network" view of accepted connections
 
 ### 6. Feed
-- Create a text post
-- View chronological feed of posts from connections
+- Create a post: text (required) + an optional photo (uploaded to Cloudinary)
+- View chronological feed of posts from connections (and your own posts)
 - the post will contain the content like text reaction no commenst feature as of now
 
 ---
@@ -75,7 +75,7 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 - "Verified" / "Pending" badge or status shown on profiles
 - Direct messaging
 - Likes / comments on posts
-- Rich media posts (images/video)
+- Video posts (a single optional photo per post is implemented; video is still out of scope)
 - Push notifications
 - Native admin panel (manual DB / bare-bones web page used instead for week 1)
 - iOS build (Android APK only for initial testing)

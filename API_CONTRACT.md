@@ -2,7 +2,7 @@
 
 Base URL (local dev): `http://localhost:3000`
 
-Covers the currently implemented endpoints: auth, profile (read-only), connections, directory. Verification and feed routers are not implemented yet — see [AGENTS.md](AGENTS.md).
+Covers the currently implemented endpoints: auth, profile (read-only), connections, directory, feed. Verification's review workflow is not implemented — see [AGENTS.md](AGENTS.md).
 
 All endpoints below except `POST /auth/signup` and `POST /auth/login` require `Authorization: Bearer <token>` (see Notes at the bottom of the Auth section).
 
@@ -428,3 +428,82 @@ Same public-profile shape as `GET /connections`'s `user` field — no email, no 
 ```json
 { "error": "Missing token" }
 ```
+
+---
+
+# Feed
+
+All endpoints below require `Authorization: Bearer <token>`.
+
+## POST /feed
+
+Create a post: text + an optional photo.
+
+**Headers**
+```
+Content-Type: multipart/form-data
+```
+
+**Request body** (`multipart/form-data` fields)
+| Field | Type | Rules |
+|---|---|---|
+| content | string (text field) | required, 1-2000 chars (trimmed; whitespace-only is rejected) |
+| photo | file | optional — image only (`image/*`), max 5MB, uploaded to Cloudinary |
+
+Example (curl):
+```
+curl -X POST http://localhost:3000/feed \
+  -H "Authorization: Bearer <token>" \
+  -F "content=Hello, network!" \
+  -F "photo=@photo.jpg;type=image/jpeg"
+```
+
+**Responses**
+
+`201 Created`
+```json
+{
+  "id": "9990132e-ff02-4129-83ba-a5ad4fa50e69",
+  "content": "Hello, network!",
+  "photoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/post-photos/xyz.png",
+  "createdAt": "2026-08-12T20:26:32.226Z",
+  "author": {
+    "id": "44e2d11d-c3b6-4ffa-a30b-d17d9af2e023",
+    "profile": { "name": "Feed A", "photoUrl": null, "designation": "DM", "service": "IAS", "department": "Revenue", "stateOrCadre": "Karnataka", "yearsInService": 5, "bio": null }
+  }
+}
+```
+`photoUrl` is `null` if no `photo` was sent.
+
+`400 Bad Request` — missing/empty `content`, or non-image/oversized `photo`
+```json
+{
+  "error": "Invalid post content",
+  "details": [
+    { "code": "too_small", "minimum": 1, "type": "string", "inclusive": true, "exact": false, "message": "String must contain at least 1 character(s)", "path": ["content"] }
+  ]
+}
+```
+```json
+{ "error": "Only image uploads are allowed" }
+```
+
+## GET /feed
+
+Chronological feed: posts from the current user's accepted connections, **plus the current user's own posts**.
+
+**Responses**
+
+`200 OK` — newest first, same post shape as the `POST /feed` response, as an array
+```json
+[
+  {
+    "id": "8c75d502-dae9-497b-bac1-1680dc4f0433",
+    "content": "Post with a photo",
+    "photoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/post-photos/abc.png",
+    "createdAt": "2026-08-12T20:26:35.450Z",
+    "author": { "id": "b8565b7a-5bb4-4ca8-a094-499b0f2a43c6", "profile": { "...": "..." } }
+  }
+]
+```
+No pagination yet (deferred, see [FEATURES.md](FEATURES.md)).
