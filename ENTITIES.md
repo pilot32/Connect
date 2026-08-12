@@ -1,19 +1,18 @@
 # Data Entities
 
-Current data model for the MVP, based on the finalized MVP features in [README.md](README.md). This is a planning reference, not a finalized Prisma schema — field names/types may shift once `prisma/schema.prisma` is written.
+Current data model for the MVP. `User` below matches the live `connectappbe/prisma/schema.prisma` — everything else is still a planning reference and may shift once implemented.
 
 ---
 
 ## User
 
-Core identity + auth record. One per person, tied to a phone number.
+Core identity + auth record. Email + password auth (implemented) — no email verification, OTP, or gov-email gate in this pass; see [FEATURES.md](FEATURES.md) for that as a deferred item.
 
 | Field | Type | Notes |
 |---|---|---|
 | id | UUID | Primary key |
-| phone_number | string | Unique, used for OTP login |
-| gov_email | string | Unique, used for identity verification access gate |
-| is_gov_email_verified | boolean | Set true after OTP/magic-link verification succeeds |
+| email | string | Unique, used for signup/login |
+| password_hash | string | bcrypt hash, never returned by the API |
 | created_at | timestamp | |
 | updated_at | timestamp | |
 
@@ -92,6 +91,7 @@ User 1---N Connection (as recipient)
 
 These were considered but are out of scope per the current MVP (see [FEATURES.md](FEATURES.md)):
 
+- Gov-email OTP/magic-link verification fields on `User` (`gov_email`, `is_gov_email_verified`) — cut from this pass along with the badge, may return as a later access-gate design
 - `VerificationDocument` — document upload for manual admin approval (Phase 2)
 - `AdminAction` / audit log (Phase 4)
 - `PostReaction` / `Comment` (Phase 3)
