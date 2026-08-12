@@ -26,6 +26,13 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- image_picker hard-crashes on iOS without these usage strings. iOS is
+	     out of MVP scope, but leaving them out is a landmine for whoever
+	     first tries an iOS build. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Connect uses the camera so you can photograph your service ID for verification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Connect needs photo access so you can attach your service ID and profile photo.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

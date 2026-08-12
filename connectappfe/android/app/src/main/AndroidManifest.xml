@@ -1,8 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Needed by release/profile builds to reach the API. The debug manifest
+         declares this separately for the Flutter tool's own use. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="Connect"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"

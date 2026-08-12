@@ -59,6 +59,10 @@ dependencies:
   # Env config (API base URL, etc.)
   flutter_dotenv: ^5.2.1
 
+  # Picking the ID card / profile photos that signup uploads.
+  # Re-added because POST /auth/signup requires an idCardPhoto file.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
