@@ -146,7 +146,7 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => _buttonState = AppButtonState.success);
       await Future<void>.delayed(const Duration(milliseconds: 650));
       if (!mounted) return;
-      context.go(AppRoutes.home);
+      context.go(AppRoutes.afterLogin);
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _buttonState = AppButtonState.idle);

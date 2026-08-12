@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // Let the checkmark land before handing over to the next screen.
       await Future<void>.delayed(const Duration(milliseconds: 550));
       if (!mounted) return;
-      context.go(AppRoutes.home);
+      context.go(AppRoutes.afterLogin);
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
