@@ -13,7 +13,7 @@ Government officials currently have no dedicated, trusted platform to network wi
 | Mobile app | Flutter (Android, APK distribution for testing) |
 | Backend API | Node.js + Express |
 | Database | PostgreSQL |
-| Auth | JWT + Phone OTP |
+| Auth | JWT + Email/Password |
 | State management | Provider / Riverpod |
 | Hosting (backend) | Railway / Render / Supabase (TBD) |
 
@@ -31,7 +31,7 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 ## MVP Features (Finalized — Week 1 Prototype)
 
 ### 1. Authentication
-- Signup/login via phone number + OTP
+- Signup/login via email + password
 - JWT-based session handling
 
 ### 2. Profile
@@ -44,11 +44,11 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 - Short bio
 
 ### 3. Identity Verification (Access Gate Only)
-- Signup is gated behind OTP to a .gov tag email, or a magic link to the .gov tag email if OTP delivery fails
-- Successful gov-email verification is required before the account can access the directory, connections, or feed
-- No visible "Verified" badge or "Pending" status in MVP — verification is a one-time access check, not a profile attribute
-// deferred post-MVP - Upload verification document (service ID / appointment letter / official proof)
-// deferred post-MVP - Manual admin approval workflow
+- ID card photo (service ID / appointment letter / official proof) is captured and uploaded to Cloudinary as part of signup — implemented
+- No review, approval, or gating happens on it yet — it's stored for future manual review
+- No visible "Verified" badge or "Pending" status in MVP — verification is not a profile attribute
+// deferred post-MVP - Manual admin approval/review workflow for the uploaded ID card photo
+// deferred post-MVP - Gov-email OTP/magic-link access gate
 // deferred post-MVP - Verified/Pending badge shown on profiles
 
 ### 4. Directory / Search
@@ -70,7 +70,8 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 ## Explicitly Out of Scope for MVP
 
 - Aadhaar / DigiLocker government ID verification (deferred — requires API access + compliance review)
-- Verification document upload + manual admin approval workflow
+- Manual admin approval/review workflow for the ID card photo (photo upload itself is implemented at signup)
+- Gov-email OTP/magic-link access gate
 - "Verified" / "Pending" badge or status shown on profiles
 - Direct messaging
 - Likes / comments on posts
@@ -85,8 +86,8 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 
 
 1. Install the APK on an Android device
-2. Sign up and complete gov-email OTP verification (access gate — no badge/status shown)
-3. Create a profile
+2. Sign up with email + password, profile details, and an ID card photo
+3. Log in
 4. Search the directory and find another seeded official
 5. Send/accept a connection request
 6. Post to the feed and see it appear

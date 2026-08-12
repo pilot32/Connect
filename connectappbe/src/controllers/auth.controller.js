@@ -2,31 +2,95 @@ const { z } = require('zod');
 const prisma = require('../config/db');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { signToken } = require('../utils/jwt');
+const { uploadImageBuffer } = require('../utils/imageUpload');
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 });
 
+const signupSchema = credentialsSchema.extend({
+  name: z.string().min(1),
+  designation: z.string().min(1),
+  service: z.string().min(1),
+  department: z.string().min(1),
+  stateOrCadre: z.string().min(1),
+  yearsInService: z.coerce.number().int().nonnegative(),
+  bio: z.string().optional(),
+});
+
+function serializeUser(user) {
+  return { id: user.id, email: user.email };
+}
+
+function serializeProfile(profile) {
+  return {
+    name: profile.name,
+    photoUrl: profile.photoUrl,
+    designation: profile.designation,
+    service: profile.service,
+    department: profile.department,
+    stateOrCadre: profile.stateOrCadre,
+    yearsInService: profile.yearsInService,
+    bio: profile.bio,
+  };
+}
+
 async function signup(req, res, next) {
   try {
-    const { email, password } = credentialsSchema.parse(req.body);
+    const parsed = signupSchema.parse(req.body);
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const idCardFile = req.files?.idCardPhoto?.[0];
+    if (!idCardFile) {
+      return res.status(400).json({ error: 'ID card photo is required' });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email: parsed.email } });
     if (existingUser) {
       return res.status(409).json({ error: 'Email is already registered' });
     }
 
-    const passwordHash = await hashPassword(password);
-    const user = await prisma.user.create({
-      data: { email, passwordHash },
+    const passwordHash = await hashPassword(parsed.password);
+    const idCardPhotoUrl = await uploadImageBuffer(
+      idCardFile.buffer,
+      idCardFile.mimetype,
+      'govconnect/id-cards'
+    );
+
+    const profilePhotoFile = req.files?.profilePhoto?.[0];
+    const profilePhotoUrl = profilePhotoFile
+      ? await uploadImageBuffer(profilePhotoFile.buffer, profilePhotoFile.mimetype, 'govconnect/profile-photos')
+      : null;
+
+    const { user, profile } = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: { email: parsed.email, passwordHash, idCardPhotoUrl },
+      });
+      const createdProfile = await tx.profile.create({
+        data: {
+          userId: createdUser.id,
+          name: parsed.name,
+          photoUrl: profilePhotoUrl,
+          designation: parsed.designation,
+          service: parsed.service,
+          department: parsed.department,
+          stateOrCadre: parsed.stateOrCadre,
+          yearsInService: parsed.yearsInService,
+          bio: parsed.bio,
+        },
+      });
+      return { user: createdUser, profile: createdProfile };
     });
 
     const token = signToken({ sub: user.id, email: user.email });
-    res.status(201).json({ token, user: { id: user.id, email: user.email } });
+    res.status(201).json({
+      token,
+      user: serializeUser(user),
+      profile: serializeProfile(profile),
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid email or password', details: err.issues });
+      return res.status(400).json({ error: 'Invalid signup details', details: err.issues });
     }
     next(err);
   }
@@ -47,7 +111,7 @@ async function login(req, res, next) {
     }
 
     const token = signToken({ sub: user.id, email: user.email });
-    res.status(200).json({ token, user: { id: user.id, email: user.email } });
+    res.status(200).json({ token, user: serializeUser(user) });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid email or password', details: err.issues });
