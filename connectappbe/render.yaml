@@ -1,0 +1,44 @@
+# Render blueprint for the Connect backend.
+#
+# In the Render dashboard: New > Blueprint, point it at this repo, and set
+# `rootDir` correctly (below). Secrets are NOT stored here — every var marked
+# `sync: false` must be filled in via the Render dashboard, which is what keeps
+# them out of this public repository.
+services:
+  - type: web
+    name: connect-api
+    runtime: node
+    plan: free
+    # This file lives in connectappbe/, but Render resolves rootDir from the
+    # repository root.
+    rootDir: connectappbe
+    # `npm install` triggers the postinstall hook, which runs `prisma generate`.
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.1
+
+      # Render injects PORT automatically; src/config/env.js already reads it.
+
+      # --- Supabase Postgres -------------------------------------------------
+      # Use the CONNECTION POOLER host (aws-0-<region>.pooler.supabase.com),
+      # not db.<ref>.supabase.co — the direct host is IPv6-only.
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+
+      # --- Auth --------------------------------------------------------------
+      # Generate a fresh one for production: openssl rand -base64 32
+      - key: JWT_SECRET
+        sync: false
+
+      # --- Cloudinary --------------------------------------------------------
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
