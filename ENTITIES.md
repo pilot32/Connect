@@ -21,7 +21,7 @@ Core identity + auth record. Email + password auth, plus an ID card photo captur
 
 ## Profile
 
-Public-facing professional profile, one-to-one with User. Created together with User in the same signup request (implemented).
+Public-facing professional profile, one-to-one with User. Created together with User in the same signup request; editable afterward via `PUT /profile/me` (implemented — `GET/PUT /profile/*`, see [API_CONTRACT.md](API_CONTRACT.md)).
 
 | Field | Type | Notes |
 |---|---|---|
@@ -42,7 +42,7 @@ Public-facing professional profile, one-to-one with User. Created together with 
 
 ## Connection
 
-Represents a connection request between two users and its state (implemented — `GET/POST /connections/*`, see [API_CONTRACT.md](API_CONTRACT.md)).
+Represents a connection request between two users and its state (implemented — `GET/POST/DELETE /connections/*`, see [API_CONTRACT.md](API_CONTRACT.md)).
 
 | Field | Type | Notes |
 |---|---|---|
@@ -56,7 +56,8 @@ Represents a connection request between two users and its state (implemented —
 Notes:
 - Unique constraint on (requester_id, recipient_id) — but request creation also checks the reverse pair `(recipient_id, requester_id)` in application code, so only one `Connection` row can ever exist between two users regardless of direction.
 - DB check constraint `requester_id <> recipient_id` — can't connect to yourself.
-- Re-requesting after a decline isn't supported yet — any existing row (any status) blocks a new request between the same pair.
+- Any existing row (any status) blocks a new request between the same pair, **unless** it's deleted first via `DELETE /connections/:connectionId` — the row must be explicitly removed to re-request; there's no separate "reset" operation.
+- `DELETE /connections/:connectionId`: `pending` → only the requester may delete (cancel their own outgoing request); `accepted`/`declined` → either party may delete.
 - "My Network" view (`GET /connections`) = all Connections where status = accepted and the current user is either requester or recipient.
 
 ---

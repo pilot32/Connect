@@ -2,7 +2,7 @@
 
 Base URL (local dev): `http://localhost:3000`
 
-Covers the currently implemented endpoints: auth, profile (read-only), connections, directory, feed. Verification's review workflow is not implemented — see [AGENTS.md](AGENTS.md).
+Covers the currently implemented endpoints: auth, profile, connections, directory, feed. Verification's review workflow is not implemented — see [AGENTS.md](AGENTS.md).
 
 All endpoints below except `POST /auth/signup` and `POST /auth/login` require `Authorization: Bearer <token>` (see Notes at the bottom of the Auth section).
 
@@ -190,7 +190,7 @@ Content-Type: application/json
 
 ---
 
-# Profile (read-only)
+# Profile
 
 All endpoints below require `Authorization: Bearer <token>`.
 
@@ -226,6 +226,58 @@ The authenticated user's own profile.
 ```json
 { "error": "Profile not found" }
 ```
+
+## PUT /profile/me
+
+Partial update of the authenticated user's own profile. Only send the fields you want to change — omitted fields are left as-is.
+
+**Headers**
+```
+Content-Type: multipart/form-data
+```
+
+**Request body** (`multipart/form-data` fields, all optional)
+| Field | Type | Rules |
+|---|---|---|
+| name | string (text field) | non-empty if sent |
+| designation | string (text field) | non-empty if sent |
+| service | string (text field) | non-empty if sent |
+| department | string (text field) | non-empty if sent |
+| stateOrCadre | string (text field) | non-empty if sent |
+| yearsInService | string (text field, numeric) | coerced to a non-negative integer if sent |
+| bio | string (text field) | any string, including empty (clears the bio) |
+| photo | file | optional — image only, max 5MB, uploaded to Cloudinary. If omitted, the existing `photoUrl` is left unchanged (there's no way to *clear* an existing photo yet, only replace it) |
+
+At least one field or `photo` must be sent — an entirely empty request is rejected.
+
+**Responses**
+
+`200 OK` — same shape as `GET /profile/me`
+```json
+{
+  "user": { "id": "93496c45-6fc8-47e4-894c-f45800879aed", "email": "putX@example.com" },
+  "profile": {
+    "name": "Put X",
+    "photoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/profile-photos/xyz.png",
+    "designation": "Joint Secretary",
+    "service": "IAS",
+    "department": "Revenue",
+    "stateOrCadre": "Karnataka",
+    "yearsInService": 6,
+    "bio": "Updated bio only"
+  }
+}
+```
+
+`400 Bad Request` — no fields sent, an empty/invalid value for a sent field, or a non-image/oversized `photo`
+```json
+{ "error": "Invalid profile update", "details": [ { "...": "zod issue, same shape as elsewhere" } ] }
+```
+```json
+{ "error": "Only image uploads are allowed" }
+```
+
+`404 Not Found` — no profile exists for this user
 
 ## GET /profile/:id
 
@@ -296,7 +348,7 @@ Send a connection request to another user.
 { "error": "User not found" }
 ```
 
-`409 Conflict` — a `Connection` row already exists between these two users, in either direction, regardless of status (pending/accepted/declined). Re-requesting after a decline isn't supported yet.
+`409 Conflict` — a `Connection` row already exists between these two users, in either direction, regardless of status (pending/accepted/declined). Delete it first via `DELETE /connections/:connectionId` to re-request.
 ```json
 { "error": "A connection already exists between these users" }
 ```
@@ -382,6 +434,35 @@ Pending requests, split by direction — drives the accept/decline UI.
 }
 ```
 `incoming` = requests sent *to* the current user (actionable via accept/decline). `outgoing` = requests the current user sent, awaiting the other party.
+
+## DELETE /connections/:connectionId
+
+Remove a connection. Semantics depend on its current status:
+- **`pending`** — only the **requester** may delete it (cancels their own outgoing request; the recipient should use decline instead, not delete)
+- **`accepted`** — **either party** may delete it (disconnect/"unfriend")
+- **`declined`** — **either party** may delete it (cleanup — also the way to unblock re-requesting, since a declined row otherwise still blocks new requests between the same pair)
+
+**Responses**
+
+`204 No Content` — deleted, no response body
+
+`400 Bad Request` — `:connectionId` isn't a valid UUID
+```json
+{ "error": "Invalid connection id" }
+```
+
+`403 Forbidden` — either the authenticated user isn't part of this connection at all, or it's `pending` and they're the recipient (not the requester)
+```json
+{ "error": "Not part of this connection" }
+```
+```json
+{ "error": "Only the requester can cancel a pending request" }
+```
+
+`404 Not Found` — no such connection
+```json
+{ "error": "Connection not found" }
+```
 
 ---
 

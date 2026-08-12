@@ -182,10 +182,40 @@ async function listRequests(req, res, next) {
   }
 }
 
+async function deleteConnection(req, res, next) {
+  try {
+    const idResult = idParamSchema.safeParse(req.params.connectionId);
+    if (!idResult.success) {
+      return res.status(400).json({ error: 'Invalid connection id' });
+    }
+
+    const userId = req.user.sub;
+    const connection = await prisma.connection.findUnique({ where: { id: idResult.data } });
+    if (!connection) {
+      return res.status(404).json({ error: 'Connection not found' });
+    }
+
+    const isParty = connection.requesterId === userId || connection.recipientId === userId;
+    if (!isParty) {
+      return res.status(403).json({ error: 'Not part of this connection' });
+    }
+
+    if (connection.status === 'pending' && connection.requesterId !== userId) {
+      return res.status(403).json({ error: 'Only the requester can cancel a pending request' });
+    }
+
+    await prisma.connection.delete({ where: { id: connection.id } });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   sendRequest,
   acceptRequest,
   declineRequest,
   listMyConnections,
   listRequests,
+  deleteConnection,
 };

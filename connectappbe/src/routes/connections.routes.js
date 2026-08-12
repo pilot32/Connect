@@ -8,5 +8,6 @@ router.get('/requests', requireAuth, connectionsController.listRequests);
 router.post('/request/:userId', requireAuth, connectionsController.sendRequest);
 router.post('/:requestId/accept', requireAuth, connectionsController.acceptRequest);
 router.post('/:requestId/decline', requireAuth, connectionsController.declineRequest);
+router.delete('/:connectionId', requireAuth, connectionsController.deleteConnection);
 
 module.exports = router;
