@@ -252,12 +252,8 @@ class AppTheme {
         ),
         insetPadding: const EdgeInsets.all(AppSpacing.md),
       ),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        },
-      ),
+      // No pageTransitionsTheme: every route in app_router.dart supplies its
+      // own CustomTransitionPage, so a global builder would never be consulted.
     );
   }
 }
