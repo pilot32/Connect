@@ -9,8 +9,7 @@ Post-MVP feature ideas, organized by phase. Current MVP scope lives in [README.m
 Things that were explicitly deferred from MVP and are the most likely next additions.
 
 ### Backend
-- Verification document upload (service ID / appointment letter / official proof)
-- Manual admin approval workflow + admin panel (replacing bare-bones DB access)
+- Manual admin review/approval workflow for the ID card photo captured at signup + admin panel (replacing bare-bones DB access)
 - "Verified" / "Pending" status field on profiles, surfaced via API
 - Real OTP provider integration (Twilio or MSG91) replacing hardcoded/mock OTP
 - Rate limiting on OTP request endpoints (abuse prevention)
