@@ -1,4 +1,4 @@
-import 'package:flutter/animation.dart';
+import 'package:flutter/widgets.dart';
 
 /// 4pt-based spacing scale. Using named steps instead of raw numbers keeps
 /// rhythm consistent across screens built at different times.
@@ -52,6 +52,32 @@ class AppMotion {
   /// Slight overshoot, for confirmations and success states.
   static const Curve overshoot = Curves.easeOutBack;
 
+  /// Springy settle, for badges and counters that pop into view.
+  static const Curve pop = Curves.elasticOut;
+
   /// Per-item delay when staggering a list/form into view.
   static const Duration stagger = Duration(milliseconds: 65);
+
+  /// A cascade of more than this many items stops feeling like a reveal and
+  /// starts feeling like lag, so callers clamp their index to it.
+  static const int maxStaggerSteps = 6;
+}
+
+/// Honours the platform's "reduce motion" accessibility setting.
+///
+/// Every animation added for polish is decorative — with reduce-motion on, the
+/// user gets the same UI with transitions collapsed to zero rather than a
+/// degraded or broken layout. Wrapping this in one place means individual
+/// widgets can't forget it.
+extension MotionContext on BuildContext {
+  bool get animationsDisabled => MediaQuery.disableAnimationsOf(this);
+
+  /// [duration], or zero when the user has asked for reduced motion.
+  Duration motion(Duration duration) =>
+      animationsDisabled ? Duration.zero : duration;
+
+  /// Stagger delay for item [index], clamped and reduce-motion aware.
+  Duration stagger(int index) => animationsDisabled
+      ? Duration.zero
+      : AppMotion.stagger * index.clamp(0, AppMotion.maxStaggerSteps);
 }

@@ -47,8 +47,21 @@ class _AppButtonState extends State<AppButton> {
       _ => scheme.primary,
     };
 
+    // A bare GestureDetector contributes no "this is a button" trait and no
+    // enabled/disabled state to the accessibility tree, and the loading/
+    // success children below carry no text at all — a screen-reader user
+    // hears nothing while a multi-second upload runs. The outer Semantics
+    // node keeps announcing `widget.label` plus `button`/`enabled` regardless
+    // of which visual child is showing; ExcludeSemantics stops the descendant
+    // Text/Icon from being announced a second time underneath it.
+    final String semanticsValue = switch (widget.state) {
+      AppButtonState.loading => 'Loading',
+      AppButtonState.success => 'Done',
+      AppButtonState.idle => '',
+    };
+
     final Widget content = AnimatedSwitcher(
-      duration: AppMotion.base,
+      duration: context.motion(AppMotion.base),
       switchInCurve: AppMotion.emphasized,
       switchOutCurve: AppMotion.exit,
       transitionBuilder: (Widget child, Animation<double> animation) {
@@ -91,46 +104,55 @@ class _AppButtonState extends State<AppButton> {
       },
     );
 
-    return GestureDetector(
-      onTapDown: _enabled ? (_) => setState(() => _pressed = true) : null,
-      onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
-      onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
+    return Semantics(
+      button: true,
+      enabled: _enabled,
+      label: widget.label,
+      value: semanticsValue,
       onTap: _enabled ? widget.onPressed : null,
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: AppMotion.instant,
-        curve: AppMotion.emphasized,
-        child: AnimatedContainer(
-          duration: AppMotion.base,
-          curve: AppMotion.emphasized,
-          height: 54,
-          width: widget.expand ? double.infinity : null,
-          padding: widget.expand
-              ? null
-              : const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: _enabled || _busy
-                ? background
-                : scheme.onSurface.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: _enabled && !_pressed
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: background.withValues(alpha: 0.32),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: DefaultTextStyle(
-              style: (theme.textTheme.labelLarge ?? const TextStyle()).copyWith(
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTapDown: _enabled ? (_) => setState(() => _pressed = true) : null,
+          onTapUp: _enabled ? (_) => setState(() => _pressed = false) : null,
+          onTapCancel: _enabled ? () => setState(() => _pressed = false) : null,
+          onTap: _enabled ? widget.onPressed : null,
+          child: AnimatedScale(
+            scale: _pressed ? 0.97 : 1,
+            duration: context.motion(AppMotion.instant),
+            curve: AppMotion.emphasized,
+            child: AnimatedContainer(
+              duration: context.motion(AppMotion.base),
+              curve: AppMotion.emphasized,
+              height: 54,
+              width: widget.expand ? double.infinity : null,
+              padding: widget.expand
+                  ? null
+                  : const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              decoration: BoxDecoration(
                 color: _enabled || _busy
-                    ? Colors.white
-                    : scheme.onSurface.withValues(alpha: 0.4),
+                    ? background
+                    : scheme.onSurface.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                boxShadow: _enabled && !_pressed
+                    ? <BoxShadow>[
+                        BoxShadow(
+                          color: background.withValues(alpha: 0.32),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ]
+                    : null,
               ),
-              child: content,
+              child: Center(
+                child: DefaultTextStyle(
+                  style: (theme.textTheme.labelLarge ?? const TextStyle()).copyWith(
+                    color: _enabled || _busy
+                        ? Colors.white
+                        : scheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                  child: content,
+                ),
+              ),
             ),
           ),
         ),

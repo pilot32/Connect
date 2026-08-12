@@ -13,11 +13,16 @@ class UserListTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.subtitleOverride,
+    this.heroTag,
   });
 
   final PublicUser user;
   final Widget? trailing;
   final VoidCallback? onTap;
+
+  /// Hero tag for the avatar, so it flies into the profile screen. Must be
+  /// namespaced per source tab — see [AvatarHeroTag].
+  final Object? heroTag;
 
   /// Replaces the default "Designation · State" line, e.g. to show when a
   /// connection request arrived.
@@ -50,7 +55,7 @@ class UserListTile extends StatelessWidget {
           ),
           child: Row(
             children: <Widget>[
-              UserAvatar(profile: profile, size: 46),
+              UserAvatar(profile: profile, size: 46, heroTag: heroTag),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(

@@ -118,7 +118,7 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
           child: GestureDetector(
             onTap: widget.enabled ? _showSourceSheet : null,
             child: AnimatedContainer(
-              duration: AppMotion.base,
+              duration: context.motion(AppMotion.base),
               curve: AppMotion.emphasized,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
@@ -134,7 +134,7 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
                 ),
               ),
               child: AnimatedSwitcher(
-                duration: AppMotion.base,
+                duration: context.motion(AppMotion.base),
                 switchInCurve: AppMotion.enter,
                 child: hasValue
                     ? _Preview(

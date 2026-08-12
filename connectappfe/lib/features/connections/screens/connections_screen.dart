@@ -3,10 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/router/app_routes.dart';
+import '../../../core/state/refresh_with_error_report.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/async_view.dart';
 import '../../../core/widgets/fade_slide_in.dart';
+import '../../../core/widgets/skeleton.dart';
+import '../../../core/widgets/user_avatar.dart';
 import '../../../core/widgets/user_list_tile.dart';
 import '../models/connection_models.dart';
 import '../state/connections_controller.dart';
@@ -25,6 +28,13 @@ class ConnectionsScreen extends StatefulWidget {
 class _ConnectionsScreenState extends State<ConnectionsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs = TabController(length: 2, vsync: this);
+
+  /// Skips the entrance animation for rows already shown once, so scrolling
+  /// a long network/requests list doesn't re-blank recycled rows. One tracker
+  /// per tab — the two lists are unrelated, so a name only needs to be unique
+  /// within its own list.
+  final PlayedOnceTracker _networkPlayed = PlayedOnceTracker();
+  final PlayedOnceTracker _requestsPlayed = PlayedOnceTracker();
 
   @override
   void initState() {
@@ -72,7 +82,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
                   if (pendingCount > 0) ...<Widget>[
                     const SizedBox(width: 6),
                     AnimatedContainer(
-                      duration: AppMotion.base,
+                      duration: context.motion(AppMotion.base),
                       curve: AppMotion.overshoot,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -101,8 +111,16 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
       body: TabBarView(
         controller: _tabs,
         children: <Widget>[
-          _NetworkTab(controller: controller, onError: _showError),
-          _RequestsTab(controller: controller, onError: _showError),
+          _NetworkTab(
+            controller: controller,
+            onError: _showError,
+            played: _networkPlayed,
+          ),
+          _RequestsTab(
+            controller: controller,
+            onError: _showError,
+            played: _requestsPlayed,
+          ),
         ],
       ),
     );
@@ -110,10 +128,15 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
 }
 
 class _NetworkTab extends StatelessWidget {
-  const _NetworkTab({required this.controller, required this.onError});
+  const _NetworkTab({
+    required this.controller,
+    required this.onError,
+    required this.played,
+  });
 
   final ConnectionsController controller;
   final ValueChanged<String?> onError;
+  final PlayedOnceTracker played;
 
   Future<void> _confirmRemove(
     BuildContext context,
@@ -150,17 +173,20 @@ class _NetworkTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: () => controller.load(silent: true),
+      onRefresh: () => refreshWithErrorReport(context, controller),
       child: AsyncView<ConnectionsData>(
         controller: controller,
         isEmpty: (ConnectionsData data) => data.network.isEmpty,
+        loadingPlaceholder: SkeletonList(
+          itemBuilder: (BuildContext context) => const UserTileSkeleton(),
+        ),
         emptyIcon: Icons.people_outline_rounded,
         emptyTitle: 'No connections yet',
         emptyMessage:
-            'Find officials in the directory and send a connection request to '
+            'Find officials in Search and send a connection request to '
             'start building your network.',
-        emptyActionLabel: 'Open directory',
-        onEmptyAction: () => context.go(AppRoutes.directory),
+        emptyActionLabel: 'Open search',
+        onEmptyAction: () => context.go(AppRoutes.search),
         builder: (BuildContext context, ConnectionsData data) {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(
@@ -173,12 +199,21 @@ class _NetworkTab extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
             itemBuilder: (BuildContext context, int index) {
               final NetworkConnection connection = data.network[index];
+              final bool alreadyShown = played.consume(connection.connectionId);
               return FadeSlideIn(
-                delay: AppMotion.stagger * (index.clamp(0, 6)),
+                // Keyed so removing one connection animates the rest into
+                // place instead of the whole list replaying its entrance.
+                key: ValueKey<String>('conn-${connection.connectionId}'),
+                delay: alreadyShown ? Duration.zero : context.stagger(index),
+                duration: alreadyShown ? Duration.zero : AppMotion.slow,
+                scaleFrom: 0.97,
                 child: UserListTile(
                   user: connection.user,
-                  onTap: () =>
-                      context.push(AppRoutes.userProfile(connection.user.id)),
+                  heroTag: AvatarHeroTag.network(connection.user.id),
+                  onTap: () => context.push(
+                    AppRoutes.userProfile(connection.user.id),
+                    extra: AvatarHeroTag.network(connection.user.id),
+                  ),
                   trailing: IconButton(
                     onPressed: controller.isBusy(connection.connectionId)
                         ? null
@@ -203,17 +238,22 @@ class _NetworkTab extends StatelessWidget {
 }
 
 class _RequestsTab extends StatelessWidget {
-  const _RequestsTab({required this.controller, required this.onError});
+  const _RequestsTab({
+    required this.controller,
+    required this.onError,
+    required this.played,
+  });
 
   final ConnectionsController controller;
   final ValueChanged<String?> onError;
+  final PlayedOnceTracker played;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
     return RefreshIndicator(
-      onRefresh: () => controller.load(silent: true),
+      onRefresh: () => refreshWithErrorReport(context, controller),
       child: AsyncView<ConnectionsData>(
         controller: controller,
         isEmpty: (ConnectionsData data) => data.requests.total == 0,
@@ -239,14 +279,22 @@ class _RequestsTab extends StatelessWidget {
                 ),
                 for (int i = 0; i < requests.incoming.length; i++)
                   Padding(
+                    key: ValueKey<String>('incoming-${requests.incoming[i].requestId}'),
                     padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                    child: FadeSlideIn(
-                      delay: AppMotion.stagger * (i.clamp(0, 6)),
-                      child: _IncomingCard(
-                        request: requests.incoming[i],
-                        controller: controller,
-                        onError: onError,
-                      ),
+                    child: Builder(
+                      builder: (BuildContext context) {
+                        final bool alreadyShown =
+                            played.consume(requests.incoming[i].requestId);
+                        return FadeSlideIn(
+                          delay: alreadyShown ? Duration.zero : context.stagger(i),
+                          duration: alreadyShown ? Duration.zero : AppMotion.slow,
+                          child: _IncomingCard(
+                            request: requests.incoming[i],
+                            controller: controller,
+                            onError: onError,
+                          ),
+                        );
+                      },
                     ),
                   ),
               ],

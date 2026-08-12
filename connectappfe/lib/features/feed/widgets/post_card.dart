@@ -2,14 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/relative_time.dart';
+import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/user_avatar.dart';
 import '../models/post.dart';
 
 class PostCard extends StatelessWidget {
-  const PostCard({super.key, required this.post, this.onAuthorTap});
+  const PostCard({
+    super.key,
+    required this.post,
+    this.onAuthorTap,
+    this.heroTag,
+  });
 
   final Post post;
   final VoidCallback? onAuthorTap;
+
+  /// Hero tag for the author avatar; namespaced per tab by the caller.
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +47,11 @@ class PostCard extends StatelessWidget {
               children: <Widget>[
                 GestureDetector(
                   onTap: onAuthorTap,
-                  child: UserAvatar(profile: post.author.profile, size: 42),
+                  child: UserAvatar(
+                    profile: post.author.profile,
+                    size: 42,
+                    heroTag: heroTag,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
@@ -90,22 +103,32 @@ class PostCard extends StatelessWidget {
                 width: double.infinity,
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                loadingBuilder: (
+                // Fades the photo in over its shimmer once decoded, instead of
+                // the image snapping into place and shoving the layout.
+                frameBuilder: (
                   BuildContext context,
                   Widget child,
-                  ImageChunkEvent? progress,
+                  int? frame,
+                  bool wasSynchronouslyLoaded,
                 ) {
-                  if (progress == null) return child;
-                  return Container(
-                    height: 180,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                    child: const Center(
-                      child: SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
-                      ),
-                    ),
+                  if (wasSynchronouslyLoaded) return child;
+                  return AnimatedSwitcher(
+                    duration: context.motion(AppMotion.slower),
+                    switchInCurve: AppMotion.enter,
+                    child: frame == null
+                        ? const SizedBox(
+                            key: ValueKey<String>('loading'),
+                            height: 190,
+                            width: double.infinity,
+                            child: SkeletonBox(
+                              height: 190,
+                              radius: 0,
+                            ),
+                          )
+                        : KeyedSubtree(
+                            key: const ValueKey<String>('image'),
+                            child: child,
+                          ),
                   );
                 },
               ),

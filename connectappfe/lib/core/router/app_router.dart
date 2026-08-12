@@ -5,7 +5,7 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/state/auth_controller.dart';
 import '../../features/connections/screens/connections_screen.dart';
-import '../../features/directory/screens/directory_screen.dart';
+import '../../features/directory/screens/search_screen.dart';
 import '../../features/feed/screens/compose_post_screen.dart';
 import '../../features/feed/screens/feed_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
@@ -87,19 +87,38 @@ GoRouter buildRouter(AuthController auth) {
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (BuildContext context, GoRouterState state) => _slideUp(
           state,
-          UserProfileScreen(userId: state.pathParameters['id'] ?? ''),
+          UserProfileScreen(
+            userId: state.pathParameters['id'] ?? '',
+            // The source screen passes its namespaced avatar tag so the Hero
+            // has a matching endpoint here. Null when arrived at by deep link,
+            // in which case there is simply no flight.
+            heroTag: state.extra is String ? state.extra! as String : null,
+          ),
         ),
       ),
 
       // Each branch keeps its own navigator, so tab state and scroll position
       // survive switching away and back.
-      StatefulShellRoute.indexedStack(
+      //
+      // Uses the general StatefulShellRoute rather than `.indexedStack` so the
+      // branch container can be supplied: a plain IndexedStack cuts between
+      // tabs, and a cross-fade needs both branches painted at once.
+      StatefulShellRoute(
         builder: (
           BuildContext context,
           GoRouterState state,
           StatefulNavigationShell navigationShell,
         ) =>
             AppShell(navigationShell: navigationShell),
+        navigatorContainerBuilder: (
+          BuildContext context,
+          StatefulNavigationShell navigationShell,
+          List<Widget> children,
+        ) =>
+            AnimatedBranchContainer(
+          currentIndex: navigationShell.currentIndex,
+          children: children,
+        ),
         branches: <StatefulShellBranch>[
           StatefulShellBranch(
             routes: <RouteBase>[
@@ -113,9 +132,9 @@ GoRouter buildRouter(AuthController auth) {
           StatefulShellBranch(
             routes: <RouteBase>[
               GoRoute(
-                path: AppRoutes.directory,
+                path: AppRoutes.search,
                 pageBuilder: (BuildContext context, GoRouterState state) =>
-                    _noTransition(state, const DirectoryScreen()),
+                    _noTransition(state, const SearchScreen()),
               ),
             ],
           ),
@@ -175,10 +194,12 @@ CustomTransitionPage<void> _fade(GoRouterState state, Widget child) {
       Animation<double> secondaryAnimation,
       Widget child,
     ) {
-      final Animation<double> eased = CurvedAnimation(
-        parent: animation,
-        curve: AppMotion.emphasized,
-      );
+      // `transitionsBuilder` runs every frame of the transition (the Navigator
+      // wraps it in a ListenableBuilder on the route animation). No reverseCurve
+      // here, so `.drive(CurveTween(...))` — a stateless proxy, nothing to leak —
+      // covers it; contrast with `_slideUp` below, which does need reverseCurve.
+      final Animation<double> eased =
+          animation.drive(CurveTween(curve: AppMotion.emphasized));
       return FadeTransition(
         opacity: eased,
         child: ScaleTransition(
@@ -189,6 +210,22 @@ CustomTransitionPage<void> _fade(GoRouterState state, Widget child) {
     },
   );
 }
+
+/// One [CurvedAnimation] per route-transition animation, not per frame.
+///
+/// `_slideUp` needs a distinct `reverseCurve`, which `CurveTween`/`.drive()`
+/// can't express — the only way to get one is `CurvedAnimation`, which adds a
+/// status listener to its parent at construction and must be disposed to
+/// remove it. Since `transitionsBuilder` is a free function invoked every
+/// frame, constructing one there directly would leak a listener per frame for
+/// the whole transition, and re-seeding `_curveDirection` from `parent.status`
+/// on each of those breaks the class's deliberate direction-stickiness — an
+/// interrupted push (a pop mid-rise) would visibly snap curves mid-flight
+/// instead of continuing to ease out on the curve it started with.
+/// [Expando] keys this by the route's own animation object, which is stable
+/// for that route's whole lifetime and already owns the memoized entry's
+/// lifetime — no separate dispose bookkeeping needed here.
+final Expando<CurvedAnimation> _slideUpCurves = Expando<CurvedAnimation>();
 
 /// Sheet-style rise, for screens pushed *on top of* the current context.
 CustomTransitionPage<void> _slideUp(GoRouterState state, Widget child) {
@@ -203,7 +240,8 @@ CustomTransitionPage<void> _slideUp(GoRouterState state, Widget child) {
       Animation<double> secondaryAnimation,
       Widget child,
     ) {
-      final Animation<double> eased = CurvedAnimation(
+      final CurvedAnimation eased = _slideUpCurves[animation] ??=
+          CurvedAnimation(
         parent: animation,
         curve: AppMotion.emphasized,
         reverseCurve: AppMotion.exit,

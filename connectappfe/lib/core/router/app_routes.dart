@@ -9,7 +9,11 @@ class AppRoutes {
 
   // Bottom-navigation tabs.
   static const String feed = '/feed';
-  static const String directory = '/directory';
+
+  /// Surfaced to users as "Search". The path follows the product name, while
+  /// the backend endpoint and the `features/directory` code keep the API's
+  /// "directory" wording — see `DirectoryService`.
+  static const String search = '/search';
   static const String network = '/network';
   static const String profile = '/profile';
 

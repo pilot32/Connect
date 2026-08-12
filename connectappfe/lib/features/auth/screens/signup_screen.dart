@@ -84,7 +84,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _step = step);
     _pageController.animateToPage(
       step,
-      duration: AppMotion.slow,
+      duration: context.motion(AppMotion.slow),
       curve: AppMotion.emphasized,
     );
   }
@@ -582,7 +582,7 @@ class _ServiceSelector extends StatelessWidget {
               }).toList(),
             ),
             AnimatedSize(
-              duration: AppMotion.base,
+              duration: context.motion(AppMotion.base),
               curve: AppMotion.emphasized,
               alignment: Alignment.topCenter,
               child: value == _otherService
@@ -744,7 +744,7 @@ class _Footer extends StatelessWidget {
             children: List<Widget>.generate(stepCount, (int index) {
               final bool active = index <= step;
               return AnimatedContainer(
-                duration: AppMotion.base,
+                duration: context.motion(AppMotion.base),
                 curve: AppMotion.emphasized,
                 margin: const EdgeInsets.only(right: 6),
                 height: 7,

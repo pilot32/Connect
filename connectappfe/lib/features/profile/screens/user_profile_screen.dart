@@ -17,9 +17,12 @@ import '../widgets/profile_header.dart';
 /// pushed, transient screen and several can be stacked, so per-screen state
 /// keeps them independent.
 class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key, required this.userId});
+  const UserProfileScreen({super.key, required this.userId, this.heroTag});
 
   final String userId;
+
+  /// Avatar Hero tag supplied by whichever list navigated here.
+  final Object? heroTag;
 
   @override
   State<UserProfileScreen> createState() => _UserProfileScreenState();
@@ -109,6 +112,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               FadeSlideIn(
                 child: ProfileHeader(
                   profile: profile,
+                  heroTag: widget.heroTag,
                   action: Align(
                     alignment: Alignment.centerLeft,
                     child: ConnectButton(

@@ -173,7 +173,7 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
                   // when you're 1800 characters away from it.
                   AnimatedOpacity(
                     opacity: remaining <= 200 ? 1 : 0,
-                    duration: AppMotion.fast,
+                    duration: context.motion(AppMotion.fast),
                     child: Text(
                       '$remaining',
                       style: theme.textTheme.labelMedium?.copyWith(

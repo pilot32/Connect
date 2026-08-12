@@ -77,20 +77,29 @@ class ConnectButton extends StatelessWidget {
         ),
     };
 
-    return AnimatedSwitcher(
-      duration: AppMotion.base,
-      switchInCurve: AppMotion.emphasized,
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.85, end: 1).animate(animation),
-            child: child,
-          ),
-        );
-      },
-      child: DefaultTextStyle(
-        style: theme.textTheme.labelMedium ?? const TextStyle(),
+    return DefaultTextStyle(
+      style: theme.textTheme.labelMedium ?? const TextStyle(),
+      // `child` (the switch above) carries its own distinct ValueKey per
+      // state and is passed straight through as AnimatedSwitcher's child —
+      // NOT wrapped in another widget here. AnimatedSwitcher decides whether
+      // to transition by comparing the *outgoing* widget it's holding against
+      // the *incoming* one via `Widget.canUpdate` (same type + same key). A
+      // wrapper like `DefaultTextStyle(child: child)` used to sit between them
+      // and was itself keyless, so every state change compared two keyless
+      // DefaultTextStyles, always "matched", and the fade/scale transition
+      // below never actually ran — the pill just snapped between states.
+      child: AnimatedSwitcher(
+        duration: context.motion(AppMotion.base),
+        switchInCurve: AppMotion.emphasized,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.85, end: 1).animate(animation),
+              child: child,
+            ),
+          );
+        },
         child: child,
       ),
     );
@@ -126,39 +135,46 @@ class _Pill extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: busy ? null : onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              SizedBox(
-                height: 15,
-                width: 15,
-                child: busy
-                    ? CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          filled ? Colors.white : accent,
-                        ),
-                      )
-                    : Icon(
-                        icon,
-                        size: 15,
-                        color: filled ? Colors.white : accent,
-                      ),
+        child: ConstrainedBox(
+          // Content is only ~15px tall; without an explicit floor the tap
+          // target sits around 31px — under both the 44pt (iOS) and 48dp
+          // (Material) minimums, and small enough that mis-taps land on the
+          // surrounding UserListTile's much larger InkWell instead, silently
+          // navigating to a profile when the user meant to send a request.
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(
+                    height: 15,
+                    width: 15,
+                    child: busy
+                        ? CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              filled ? Colors.white : accent,
+                            ),
+                          )
+                        : Icon(
+                            icon,
+                            size: 15,
+                            color: filled ? Colors.white : accent,
+                          ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: filled ? Colors.white : accent,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 5),
-              Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: filled ? Colors.white : accent,
-                  fontSize: 12.5,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

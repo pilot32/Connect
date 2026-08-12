@@ -91,8 +91,9 @@ class _ConnectAppState extends State<ConnectApp> {
         title: 'Connect',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
+        // Light-only by product decision: no darkTheme is supplied, so the
+        // system setting cannot pull the app into a dark palette.
+        themeMode: ThemeMode.light,
         routerConfig: _router,
       ),
     );

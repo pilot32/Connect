@@ -5,7 +5,7 @@ import '../theme/app_tokens.dart';
 import 'empty_state.dart';
 
 /// Renders the four states of a [LoadController] consistently across features:
-/// initial spinner, error with retry, empty, and data.
+/// loading, error with retry, empty, and data.
 ///
 /// Written as a widget rather than a mixin so screens stay declarative and
 /// nobody has to remember to handle the error branch.
@@ -20,6 +20,7 @@ class AsyncView<T> extends StatelessWidget {
     required this.emptyMessage,
     this.emptyActionLabel,
     this.onEmptyAction,
+    this.loadingPlaceholder,
   });
 
   final LoadController<T> controller;
@@ -35,18 +36,34 @@ class AsyncView<T> extends StatelessWidget {
   final String? emptyActionLabel;
   final VoidCallback? onEmptyAction;
 
+  /// Skeleton shaped like the real content. Falls back to a spinner when a
+  /// screen has no meaningful shape to promise.
+  final Widget? loadingPlaceholder;
+
   @override
   Widget build(BuildContext context) {
     final T? data = controller.data;
 
     final Widget child;
-    if (controller.status == LoadStatus.loading && data == null) {
-      child = const Center(
-        key: ValueKey<String>('loading'),
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xxl),
-          child: CircularProgressIndicator(strokeWidth: 2.6),
-        ),
+    // `idle` (before the screen's post-frame loadOnce() has even run) is
+    // treated the same as `loading`: every screen calls loadOnce() one frame
+    // after first build, so without this, frame 1 renders the *empty* state
+    // (falling through the branches below) and frame 2 swaps in loading —
+    // a flash of "no data" that briefly outranks the real loading UI on
+    // every cold start.
+    final bool showLoading = data == null &&
+        (controller.status == LoadStatus.loading ||
+            controller.status == LoadStatus.idle);
+    if (showLoading) {
+      child = KeyedSubtree(
+        key: const ValueKey<String>('loading'),
+        child: loadingPlaceholder ??
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.xxl),
+                child: CircularProgressIndicator(strokeWidth: 2.6),
+              ),
+            ),
       );
     } else if (controller.status == LoadStatus.error && data == null) {
       child = EmptyState(
@@ -75,8 +92,18 @@ class AsyncView<T> extends StatelessWidget {
     }
 
     return AnimatedSwitcher(
-      duration: AppMotion.base,
+      duration: context.motion(AppMotion.base),
       switchInCurve: AppMotion.enter,
+      switchOutCurve: AppMotion.exit,
+      // Default layout stacks children centred, which fights a full-height
+      // list; keep them top-aligned and full-bleed instead.
+      layoutBuilder: (Widget? current, List<Widget> previous) => Stack(
+        alignment: Alignment.topCenter,
+        children: <Widget>[
+          ...previous,
+          if (current != null) Positioned.fill(child: current),
+        ],
+      ),
       child: child,
     );
   }

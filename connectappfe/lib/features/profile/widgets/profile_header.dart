@@ -13,6 +13,7 @@ class ProfileHeader extends StatelessWidget {
     required this.profile,
     this.email,
     this.action,
+    this.heroTag,
   });
 
   final UserProfile? profile;
@@ -20,6 +21,9 @@ class ProfileHeader extends StatelessWidget {
   /// Only shown for the signed-in user — the API never returns other people's.
   final String? email;
   final Widget? action;
+
+  /// Receives the avatar Hero flying in from the list the user tapped.
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +53,12 @@ class ProfileHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              UserAvatar(profile: profile, size: 68, onLight: false),
+              UserAvatar(
+                profile: profile,
+                size: 68,
+                onLight: false,
+                heroTag: heroTag,
+              ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(

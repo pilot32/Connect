@@ -44,7 +44,23 @@ class _AuthShellState extends State<AuthShell>
   late final AnimationController _aurora = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 14),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This is the first screen of the app, and a 14s drifting background is
+    // exactly the kind of motion "reduce motion" is meant to remove — and,
+    // as a plain `repeat()`, it would otherwise never stop moving or let the
+    // scheduler idle for as long as the screen is on. Every other looping
+    // animation in the app (skeleton shimmer, empty-state float) gates the
+    // same way; this one only got it after an audit caught the omission.
+    if (context.animationsDisabled) {
+      if (_aurora.isAnimating) _aurora.stop();
+    } else if (!_aurora.isAnimating) {
+      _aurora.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
@@ -70,7 +86,7 @@ class _AuthShellState extends State<AuthShell>
               child: Column(
                 children: <Widget>[
                   AnimatedSize(
-                    duration: AppMotion.base,
+                    duration: context.motion(AppMotion.base),
                     curve: AppMotion.emphasized,
                     alignment: Alignment.topCenter,
                     child: _Header(
@@ -297,7 +313,7 @@ class _WizardProgress extends StatelessWidget {
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 return AnimatedContainer(
-                  duration: AppMotion.slow,
+                  duration: context.motion(AppMotion.slow),
                   curve: AppMotion.emphasized,
                   width: constraints.maxWidth * value.clamp(0.0, 1.0),
                   decoration: const BoxDecoration(

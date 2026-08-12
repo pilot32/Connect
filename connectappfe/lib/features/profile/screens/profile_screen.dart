@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/models.dart';
 import '../../../core/router/app_routes.dart';
+import '../../../core/state/refresh_with_error_report.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/async_view.dart';
@@ -77,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => controller.load(silent: true),
+        onRefresh: () => refreshWithErrorReport(context, controller),
         child: AsyncView<MyProfile>(
           controller: controller,
           isEmpty: (MyProfile data) => false,

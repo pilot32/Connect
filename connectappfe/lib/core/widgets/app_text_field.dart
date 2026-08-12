@@ -75,7 +75,7 @@ class _AppTextFieldState extends State<AppTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         AnimatedDefaultTextStyle(
-          duration: AppMotion.fast,
+          duration: context.motion(AppMotion.fast),
           style: (theme.textTheme.labelMedium ?? const TextStyle()).copyWith(
             color: _focused ? scheme.primary : theme.textTheme.labelMedium?.color,
           ),
@@ -83,7 +83,7 @@ class _AppTextFieldState extends State<AppTextField> {
         ),
         const SizedBox(height: AppSpacing.xs),
         AnimatedContainer(
-          duration: AppMotion.base,
+          duration: context.motion(AppMotion.base),
           curve: AppMotion.emphasized,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -118,7 +118,7 @@ class _AppTextFieldState extends State<AppTextField> {
               prefixIcon: widget.prefixIcon == null
                   ? null
                   : AnimatedSwitcher(
-                      duration: AppMotion.fast,
+                      duration: context.motion(AppMotion.fast),
                       child: Icon(
                         widget.prefixIcon,
                         key: ValueKey<bool>(_focused),

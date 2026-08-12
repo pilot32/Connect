@@ -13,6 +13,20 @@ abstract class LoadController<T> extends ChangeNotifier {
   LoadStatus _status = LoadStatus.idle;
   T? _data;
   String? _error;
+  bool _isRefreshing = false;
+
+  /// A silent refresh that failed while stale data stayed on screen. Distinct
+  /// from [error] (which only applies when there's nothing else to show) so a
+  /// screen can surface "the refresh failed" once, as a transient message,
+  /// without it fighting the main error/empty states for the same slot.
+  String? _silentError;
+
+  /// Bumped on every `load()` call and captured at the start of each request.
+  /// A response is only applied if it's still the most recent request in
+  /// flight — otherwise two overlapping loads (e.g. tapping two filter chips
+  /// quickly) could let the *first* response land after the second and
+  /// silently overwrite newer data with stale data.
+  int _requestId = 0;
 
   LoadStatus get status => _status;
   T? get data => _data;
@@ -21,6 +35,10 @@ abstract class LoadController<T> extends ChangeNotifier {
   bool get isLoading => _status == LoadStatus.loading;
   bool get hasData => _data != null;
 
+  /// True during a *silent* reload — the existing data is still on screen, so
+  /// screens can show a subtle inline indicator instead of a full placeholder.
+  bool get isRefreshing => _isRefreshing;
+
   /// Fetches the payload. Implementations should let [ApiException] propagate;
   /// [load] converts it into [error].
   Future<T> fetch();
@@ -28,32 +46,65 @@ abstract class LoadController<T> extends ChangeNotifier {
   /// [silent] keeps existing data on screen while refetching, so a pull-to-
   /// refresh doesn't blank the list out and make the page jump.
   Future<void> load({bool silent = false}) async {
-    if (!silent) {
+    final int requestId = ++_requestId;
+
+    if (silent) {
+      _isRefreshing = true;
+    } else {
       _status = LoadStatus.loading;
       _error = null;
-      notifyListeners();
+    }
+    notifyListeners();
+
+    T? result;
+    String? failureMessage;
+    try {
+      result = await fetch();
+    } on ApiException catch (e) {
+      failureMessage = e.message;
+    } catch (_) {
+      failureMessage = 'Something went wrong. Pull down to try again.';
     }
 
-    try {
-      final T result = await fetch();
+    // A newer load was issued while this one was in flight — its result (or
+    // failure) is stale and must not clobber whatever the newer request wrote.
+    if (requestId != _requestId) return;
+
+    if (failureMessage == null) {
       _data = result;
       _error = null;
+      _silentError = null;
       _status = LoadStatus.ready;
-    } on ApiException catch (e) {
-      _error = e.message;
+    } else {
+      _error = failureMessage;
       _status = _data == null ? LoadStatus.error : LoadStatus.ready;
-    } catch (_) {
-      _error = 'Something went wrong. Pull down to try again.';
-      _status = _data == null ? LoadStatus.error : LoadStatus.ready;
+      // Data survived (this was a silent refresh) — the failure needs its own
+      // surface, since AsyncView's error branch only renders when data==null.
+      if (_data != null) _silentError = failureMessage;
     }
+    _isRefreshing = false;
     notifyListeners();
   }
 
-  /// Loads once; later calls are no-ops. For tab bodies that shouldn't refetch
-  /// every time the tab is re-selected.
+  /// Loads once; re-fires only if the previous attempt never produced data —
+  /// i.e. it's still idle, or it errored with nothing to show. Once real data
+  /// has landed (or a silent refresh kept stale data on screen), later calls
+  /// are no-ops, so tab bodies don't refetch every time the tab is reselected.
   Future<void> loadOnce() async {
-    if (_status != LoadStatus.idle) return;
+    final bool neverAttempted = _status == LoadStatus.idle;
+    final bool failedWithNothingToShow =
+        _status == LoadStatus.error && _data == null;
+    if (!neverAttempted && !failedWithNothingToShow) return;
     await load();
+  }
+
+  /// One-shot read of a failed *silent* refresh's message — returns it once,
+  /// then clears it, so a screen can show a snackbar exactly once per failure
+  /// instead of on every rebuild.
+  String? consumeSilentError() {
+    final String? message = _silentError;
+    _silentError = null;
+    return message;
   }
 
   /// Replaces the payload locally — used for optimistic updates so the UI
