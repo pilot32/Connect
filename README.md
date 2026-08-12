@@ -44,7 +44,7 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 - Short bio
 
 ### 3. Identity Verification (Access Gate Only)
-- Signup is gated behind OTP to a .gov tag email, or a magic link to the .gov tag email if OTP delivery fails
+- Signup is gated behind OTP to a .gov or other mail too for MVP tag email, or a magic link to the .gov tag email if OTP delivery fails
 - Successful gov-email verification is required before the account can access the directory, connections, or feed
 - No visible "Verified" badge or "Pending" status in MVP — verification is a one-time access check, not a profile attribute
 // deferred post-MVP - Upload verification document (service ID / appointment letter / official proof)
