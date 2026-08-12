@@ -15,4 +15,11 @@ function serializeProfile(profile) {
   };
 }
 
-module.exports = { serializeUser, serializeProfile };
+function serializePublicProfile(userId, profile) {
+  return {
+    id: userId,
+    profile: profile ? serializeProfile(profile) : null,
+  };
+}
+
+module.exports = { serializeUser, serializeProfile, serializePublicProfile };

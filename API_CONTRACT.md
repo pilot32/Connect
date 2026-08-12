@@ -2,7 +2,7 @@
 
 Base URL (local dev): `http://localhost:3000`
 
-Covers the currently implemented endpoints: auth, profile (read-only), connections. Verification, directory, and feed routers are not implemented yet — see [AGENTS.md](AGENTS.md).
+Covers the currently implemented endpoints: auth, profile (read-only), connections, directory. Verification and feed routers are not implemented yet — see [AGENTS.md](AGENTS.md).
 
 All endpoints below except `POST /auth/signup` and `POST /auth/login` require `Authorization: Bearer <token>` (see Notes at the bottom of the Auth section).
 
@@ -382,3 +382,49 @@ Pending requests, split by direction — drives the accept/decline UI.
 }
 ```
 `incoming` = requests sent *to* the current user (actionable via accept/decline). `outgoing` = requests the current user sent, awaiting the other party.
+
+---
+
+# Directory
+
+## GET /directory
+
+Browse/search officials. Requires `Authorization: Bearer <token>`.
+
+**Query params** (all optional, combinable — AND logic; each does a case-insensitive partial match)
+| Param | Matches against |
+|---|---|
+| service | `Profile.service` |
+| department | `Profile.department` |
+| state | `Profile.stateOrCadre` |
+
+No params → all officials (including the requester's own profile if it matches — this endpoint doesn't exclude self). No pagination yet (deferred, see [FEATURES.md](FEATURES.md)).
+
+Example: `GET /directory?department=Revenue&state=Karnataka`
+
+**Responses**
+
+`200 OK` — always, even with zero matches (it's a search, not a single-resource lookup)
+```json
+[
+  {
+    "id": "65728b97-2027-4656-a3a3-9684b6061a57",
+    "profile": {
+      "name": "Dir Test One",
+      "photoUrl": null,
+      "designation": "DM",
+      "service": "IAS",
+      "department": "Revenue",
+      "stateOrCadre": "Karnataka",
+      "yearsInService": 5,
+      "bio": null
+    }
+  }
+]
+```
+Same public-profile shape as `GET /connections`'s `user` field — no email, no `idCardPhotoUrl`. Ordered by name, ascending.
+
+`401 Unauthorized` — missing/invalid token
+```json
+{ "error": "Missing token" }
+```

@@ -1,15 +1,8 @@
 const { z } = require('zod');
 const prisma = require('../config/db');
-const { serializeProfile } = require('../utils/serializers');
+const { serializePublicProfile } = require('../utils/serializers');
 
 const idParamSchema = z.string().uuid();
-
-function serializeConnectionParty(userId, profile) {
-  return {
-    id: userId,
-    profile: profile ? serializeProfile(profile) : null,
-  };
-}
 
 async function findExistingConnection(userAId, userBId) {
   return prisma.connection.findFirst({
@@ -145,7 +138,7 @@ async function listMyConnections(req, res, next) {
       return {
         connectionId: connection.id,
         since: connection.updatedAt,
-        user: serializeConnectionParty(other.id, other.profile),
+        user: serializePublicProfile(other.id, other.profile),
       };
     });
 
@@ -175,13 +168,13 @@ async function listRequests(req, res, next) {
         requestId: c.id,
         status: c.status,
         createdAt: c.createdAt,
-        user: serializeConnectionParty(c.requester.id, c.requester.profile),
+        user: serializePublicProfile(c.requester.id, c.requester.profile),
       })),
       outgoing: outgoing.map((c) => ({
         requestId: c.id,
         status: c.status,
         createdAt: c.createdAt,
-        user: serializeConnectionParty(c.recipient.id, c.recipient.profile),
+        user: serializePublicProfile(c.recipient.id, c.recipient.profile),
       })),
     });
   } catch (err) {
