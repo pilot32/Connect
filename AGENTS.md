@@ -78,39 +78,64 @@ Route → feature mapping is one router + one controller per MVP feature area: a
 
 ### Frontend — `connectappfe/`
 
+Auth (login + signup) is implemented; Profile/Directory/Connections/Feed screens
+are still empty stubs awaiting their own passes.
+
 ```
 connectappfe/
-  pubspec.yaml      deps: provider, dio, flutter_secure_storage,
-                     shared_preferences, json_annotation, go_router,
+  pubspec.yaml      deps: provider, dio, flutter_secure_storage, go_router,
+                     image_picker, shared_preferences, json_annotation,
                      connectivity_plus, flutter_dotenv
                      devDeps: build_runner, json_serializable, flutter_lints
+  test/
+    validators_test.dart  unit tests for the form validators
   lib/
-    main.dart          existing default Flutter entry point (untouched, not yet wired up)
-    app.dart             root app widget (empty stub)
+    main.dart          entry point -> ConnectApp
+    app.dart             root widget; builds the DI graph + MaterialApp.router
     core/
       config/
-        env.dart          (empty stub)
-        api_config.dart    (empty stub)
+        env.dart          API base URL (String.fromEnvironment, host-aware)
+        api_config.dart    endpoint paths + timeouts
+      models/
+        picked_image.dart  image bytes + filename, shared by picker and upload
       services/
-        api_client.dart     Dio wrapper (empty stub)
-        storage_service.dart secure storage + shared_prefs wrapper (empty stub)
+        api_client.dart     Dio wrapper: base URL, JWT interceptor, 401 hook
+        api_exception.dart   maps server {error, details} into a UI-ready error
+        storage_service.dart secure storage for the JWT
       utils/
-        validators.dart     form validators (empty stub)
-      widgets/               empty, reserved for shared widgets
+        validators.dart     form validators mirroring the backend zod rules
+      widgets/               shared UI: app_button, app_text_field, auth_shell,
+                             brand_mark, fade_slide_in, image_picker_field,
+                             shake_on_change, status_banner
       router/
-        app_router.dart     go_router config (empty stub)
+        app_router.dart     go_router config + custom page transitions
+        app_routes.dart      route path constants
       theme/
-        app_theme.dart       ThemeData (empty stub)
+        app_colors.dart      brand palette
+        app_tokens.dart      spacing / radius / motion tokens
+        app_theme.dart       light + dark ThemeData
     features/
-      auth/            screens/ (login, otp) + services/ (auth_service) — all empty stubs
-      profile/          screens/ (profile, edit_profile) + services/ (profile_service) — empty stubs
-      verification/      screens/ (verification) + services/ (verification_service) — empty stubs
-      directory/          screens/ (directory) + services/ (directory_service) — empty stubs
-      connections/         screens/ (connections) + services/ (connections_service) — empty stubs
-      feed/                screens/ (feed) + services/ (feed_service) — empty stubs
+      auth/            models/ + services/ + state/auth_controller.dart +
+                        screens/ (login_screen, signup_screen) — IMPLEMENTED
+      splash/           screens/splash_screen.dart — shown during session restore
+      home/             screens/home_screen.dart — post-login placeholder
+      profile/          screens/ (profile, edit_profile) + services/ — empty stubs
+      verification/      screens/ + services/ — empty stubs
+      directory/          screens/ + services/ — empty stubs
+      connections/         screens/ + services/ — empty stubs
+      feed/                screens/ + services/ — empty stubs
 ```
 
 Feature-first organization: each domain under `features/` owns its own `screens/` and `services/`. Shared/cross-cutting code lives under `core/`.
+
+Frontend notes:
+- **API base URL** defaults to `10.0.2.2:3000` on Android (emulator → host) and
+  `localhost:3000` elsewhere. For a physical device, pass your machine's LAN IP:
+  `flutter run --dart-define=API_BASE_URL=http://192.168.x.x:3000`.
+- **Cleartext HTTP** is enabled via `android/app/src/main/res/xml/network_security_config.xml`
+  so the dev backend is reachable. Remove it once the API is on HTTPS.
+- Models use hand-written `fromJson`, so **no `build_runner` step is required**
+  to compile, despite json_serializable being declared.
 
 ---
 

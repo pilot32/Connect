@@ -1,11 +1,16 @@
 {
   "name": "connectappbe",
   "version": "1.0.0",
-  "description": "",
+  "description": "Connect backend API — Express + Prisma over Supabase Postgres",
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "postinstall": "prisma generate",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +18,7 @@
   "dependencies": {
     "express": "^5.2.1",
     "@prisma/client": "^6.16.3",
+    "prisma": "^6.16.3",
     "jsonwebtoken": "^9.0.2",
     "dotenv": "^17.2.3",
     "zod": "^3.24.1",
@@ -23,7 +29,6 @@
     "multer": "^2.0.1"
   },
   "devDependencies": {
-    "prisma": "^6.16.3",
     "nodemon": "^3.1.9"
   }
 }

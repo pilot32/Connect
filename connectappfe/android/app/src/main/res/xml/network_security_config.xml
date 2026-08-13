@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 9 (API 28) and above block cleartext HTTP by default, which would
+  stop the app from reaching the development backend on http://10.0.2.2:3000
+  (emulator) or http://<your-lan-ip>:3000 (physical device).
+
+  TODO: Once the backend is deployed behind HTTPS, delete this file and remove
+  the android:networkSecurityConfig reference from AndroidManifest.xml. Shipping
+  a production build with blanket cleartext permitted is not acceptable.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

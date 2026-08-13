@@ -59,6 +59,10 @@ dependencies:
   # Local storage (non-sensitive cached data / preferences)
   shared_preferences: ^2.3.3
 
+  # Picking the ID card / profile photos that signup uploads.
+  # Re-added because POST /auth/signup requires an idCardPhoto file.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   # Code generation for json_annotation models
   build_runner: ^2.4.13
