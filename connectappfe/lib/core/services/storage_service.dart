@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Persists the session across app launches.
@@ -25,7 +28,7 @@ class StorageService {
   String? get cachedToken => _cachedToken;
 
   Future<String?> readToken() async {
-    _cachedToken ??= await _storage.read(key: _tokenKey);
+    _cachedToken ??= await _readSafely(_tokenKey);
     return _cachedToken;
   }
 
@@ -42,9 +45,9 @@ class StorageService {
     ]);
   }
 
-  Future<String?> readUserId() => _storage.read(key: _userIdKey);
+  Future<String?> readUserId() => _readSafely(_userIdKey);
 
-  Future<String?> readEmail() => _storage.read(key: _emailKey);
+  Future<String?> readEmail() => _readSafely(_emailKey);
 
   Future<void> clear() async {
     _cachedToken = null;
@@ -53,5 +56,33 @@ class StorageService {
       _storage.delete(key: _userIdKey),
       _storage.delete(key: _emailKey),
     ]);
+  }
+
+  /// A stored value that fails to decrypt is treated as absent, not as a
+  /// crash. On web this backend decrypts via the browser's WebCrypto API; a
+  /// mismatch between the stored ciphertext and the key held in localStorage
+  /// (browser storage quirks, a half-cleared profile, anything) throws rather
+  /// than returning null, and this was the *only* read in the app with
+  /// nothing between it and `main()` — an uncaught exception here took the
+  /// whole app down before the UI ever painted. Best-effort delete afterward
+  /// so the corrupt entry doesn't keep failing every future launch.
+  Future<String?> _readSafely(String key) async {
+    try {
+      return await _storage.read(key: key);
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('StorageService: failed to read "$key", treating as absent: $error');
+      }
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'storage_service',
+          context: ErrorDescription('reading "$key" from secure storage'),
+        ),
+      );
+      unawaited(_storage.delete(key: key).catchError((_) {}));
+      return null;
+    }
   }
 }
