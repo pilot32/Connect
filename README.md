@@ -1,4 +1,4 @@
-# GovConnect (Working Title)
+# Connect 
 
 A LinkedIn-style professional networking mobile app exclusively for government officials — IAS, IPS, IFS, and other state/central service officers — to connect, discover peers by department/state/service, and share professional updates within a verified network.
 
@@ -44,11 +44,11 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 - Short bio
 
 ### 3. Identity Verification (Access Gate Only)
-- ID card photo (service ID / appointment letter / official proof) is captured and uploaded to Cloudinary as part of signup — implemented
-- No review, approval, or gating happens on it yet — it's stored for future manual review
-- No visible "Verified" badge or "Pending" status in MVP — verification is not a profile attribute
-// deferred post-MVP - Manual admin approval/review workflow for the uploaded ID card photo
-// deferred post-MVP - Gov-email OTP/magic-link access gate
+- Signup is gated behind OTP to a .gov or other mail too for MVP tag email, or a magic link to the .gov tag email if OTP delivery fails
+- Successful gov-email verification is required before the account can access the directory, connections, or feed
+- No visible "Verified" badge or "Pending" status in MVP — verification is a one-time access check, not a profile attribute
+// deferred post-MVP - Upload verification document (service ID / appointment letter / official proof)
+// deferred post-MVP - Manual admin approval workflow
 // deferred post-MVP - Verified/Pending badge shown on profiles
 
 ### 4. Directory / Search

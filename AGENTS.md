@@ -21,7 +21,7 @@ Full product context: [README.md](README.md).
 | Mobile app | Flutter (Android only for MVP) |
 | Backend API | Node.js + Express |
 | Database | PostgreSQL via Prisma ORM |
-| Auth | JWT + Phone OTP; gov-email OTP/magic-link as an access gate (no visible verification badge) |
+| Auth | JWT + Email OTP; gov-email OTP/(later stage only Email OTP as of now )magic-link as an access gate (no visible verification badge) |
 | State management | Provider |
 | HTTP client (FE) | Dio |
 | Routing (FE) | go_router |
