@@ -1,7 +1,10 @@
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/user_list_tile.dart'
+    show UserListTile;
+import 'package:connectappfe/features/feed/widgets/post_card.dart'
+    show PostCard;
 import 'package:flutter/material.dart';
-
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
 /// A shimmering placeholder block.
 ///
@@ -18,11 +21,11 @@ class SkeletonBox extends StatelessWidget {
     this.shape = BoxShape.rectangle,
   });
 
-  const SkeletonBox.circle({super.key, required double size})
-      : height = size,
-        width = size,
-        radius = 0,
-        shape = BoxShape.circle;
+  const SkeletonBox.circle({required double size, super.key})
+    : height = size,
+      width = size,
+      radius = 0,
+      shape = BoxShape.circle;
 
   final double height;
   final double? width;
@@ -38,8 +41,9 @@ class SkeletonBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.brand.withValues(alpha: 0.08),
           shape: shape,
-          borderRadius:
-              shape == BoxShape.circle ? null : BorderRadius.circular(radius),
+          borderRadius: shape == BoxShape.circle
+              ? null
+              : BorderRadius.circular(radius),
         ),
       ),
     );
@@ -92,12 +96,12 @@ class _ShimmerState extends State<_Shimmer>
 
     return AnimatedBuilder(
       animation: _controller,
-      builder: (BuildContext context, Widget? child) {
+      builder: (context, child) {
         return ShaderMask(
           blendMode: BlendMode.srcATop,
-          shaderCallback: (Rect bounds) {
+          shaderCallback: (bounds) {
             // Sweeps from off-left to off-right across the block.
-            final double t = _controller.value * 2 - 1;
+            final t = _controller.value * 2 - 1;
             return LinearGradient(
               begin: Alignment(t - 0.35, 0),
               end: Alignment(t + 0.35, 0),
@@ -122,7 +126,7 @@ class UserTileSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -131,14 +135,14 @@ class UserTileSkeleton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: theme.colorScheme.outline),
       ),
-      child: Row(
+      child: const Row(
         children: <Widget>[
-          const SkeletonBox.circle(size: 46),
-          const SizedBox(width: AppSpacing.sm),
+          SkeletonBox.circle(size: 46),
+          SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const <Widget>[
+              children: <Widget>[
                 SkeletonBox(height: 13, width: 140),
                 SizedBox(height: AppSpacing.xs),
                 SkeletonBox(height: 11, width: 90),
@@ -159,7 +163,7 @@ class PostSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -168,11 +172,11 @@ class PostSkeleton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: theme.colorScheme.outline),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
-            children: const <Widget>[
+            children: <Widget>[
               SkeletonBox.circle(size: 42),
               SizedBox(width: AppSpacing.xs),
               Expanded(
@@ -187,12 +191,12 @@ class PostSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          const SkeletonBox(height: 12),
-          const SizedBox(height: AppSpacing.xs),
-          const SkeletonBox(height: 12),
-          const SizedBox(height: AppSpacing.xs),
-          const SkeletonBox(height: 12, width: 200),
+          SizedBox(height: AppSpacing.md),
+          SkeletonBox(height: 12),
+          SizedBox(height: AppSpacing.xs),
+          SkeletonBox(height: 12),
+          SizedBox(height: AppSpacing.xs),
+          SkeletonBox(height: 12, width: 200),
         ],
       ),
     );
@@ -203,8 +207,8 @@ class PostSkeleton extends StatelessWidget {
 /// placeholder itself arrives with the same rhythm as real content.
 class SkeletonList extends StatelessWidget {
   const SkeletonList({
-    super.key,
     required this.itemBuilder,
+    super.key,
     this.count = 5,
     this.padding,
   });
@@ -216,7 +220,8 @@ class SkeletonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: padding ??
+      padding:
+          padding ??
           const EdgeInsets.fromLTRB(
             AppSpacing.gutter,
             AppSpacing.md,
@@ -226,7 +231,7 @@ class SkeletonList extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: count,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
-      itemBuilder: (BuildContext context, int index) => Opacity(
+      itemBuilder: (context, index) => Opacity(
         // Fade the tail out so the list looks like it continues below the fold.
         opacity: 1 - (index / (count + 1)) * 0.7,
         child: itemBuilder(context),

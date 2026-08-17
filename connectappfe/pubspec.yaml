@@ -50,6 +50,10 @@ dependencies:
   # Routing between feature screens
   go_router: ^14.6.2
 
+  # Picking the ID card / profile photos that signup uploads.
+  # Re-added because POST /auth/signup requires an idCardPhoto file.
+  image_picker: ^1.1.2
+
   # JSON serialization for API models
   json_annotation: ^4.9.0
 
@@ -58,10 +62,6 @@ dependencies:
 
   # Local storage (non-sensitive cached data / preferences)
   shared_preferences: ^2.3.3
-
-  # Picking the ID card / profile photos that signup uploads.
-  # Re-added because POST /auth/signup requires an idCardPhoto file.
-  image_picker: ^1.1.2
 
 dev_dependencies:
   # Code generation for json_annotation models
@@ -86,6 +86,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - .env
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

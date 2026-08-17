@@ -1,7 +1,6 @@
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
-
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
 /// The Connect emblem: a small network of linked nodes on a brand-gradient tile.
 ///
@@ -45,15 +44,16 @@ class BrandMark extends StatelessWidget {
       tag: heroTag!,
       // Keep the tile square through the flight; the default rect tween can
       // otherwise letterbox the gradient mid-transition.
-      flightShuttleBuilder: (
-        BuildContext flightContext,
-        Animation<double> animation,
-        HeroFlightDirection direction,
-        BuildContext fromContext,
-        BuildContext toContext,
-      ) {
-        return FittedBox(fit: BoxFit.contain, child: tile);
-      },
+      flightShuttleBuilder:
+          (
+            flightContext,
+            animation,
+            direction,
+            fromContext,
+            toContext,
+          ) {
+            return FittedBox(child: tile);
+          },
       child: tile,
     );
   }
@@ -62,28 +62,28 @@ class BrandMark extends StatelessWidget {
 class _NetworkGlyphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final List<Offset> nodes = <Offset>[
+    final nodes = <Offset>[
       Offset(size.width * 0.5, size.height * 0.08),
       Offset(size.width * 0.08, size.height * 0.82),
       Offset(size.width * 0.92, size.height * 0.82),
     ];
 
-    final Paint edge = Paint()
+    final edge = Paint()
       ..color = Colors.white.withValues(alpha: 0.55)
       ..strokeWidth = size.shortestSide * 0.075
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    for (int i = 0; i < nodes.length; i++) {
-      for (int j = i + 1; j < nodes.length; j++) {
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
         canvas.drawLine(nodes[i], nodes[j], edge);
       }
     }
 
-    final Paint node = Paint()..color = Colors.white;
-    final Paint crown = Paint()..color = AppColors.accentBright;
+    final node = Paint()..color = Colors.white;
+    final crown = Paint()..color = AppColors.accentBright;
 
-    for (int i = 0; i < nodes.length; i++) {
+    for (var i = 0; i < nodes.length; i++) {
       // The apex node carries the accent colour so the mark has a focal point.
       canvas.drawCircle(
         nodes[i],
@@ -139,10 +139,10 @@ class BrandTagline extends StatelessWidget {
       'FOR SERVING OFFICIALS',
       style: (Theme.of(context).textTheme.labelSmall ?? const TextStyle())
           .copyWith(
-        color: color ?? AppColors.accentBright,
-        letterSpacing: 2.4,
-        fontSize: 10.5,
-      ),
+            color: color ?? AppColors.accentBright,
+            letterSpacing: 2.4,
+            fontSize: 10.5,
+          ),
     );
   }
 }

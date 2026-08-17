@@ -1,8 +1,7 @@
+import 'package:connectappfe/core/config/api_config.dart';
+import 'package:connectappfe/core/services/api_client.dart';
+import 'package:connectappfe/features/auth/models/auth_models.dart';
 import 'package:dio/dio.dart';
-
-import '../../../core/config/api_config.dart';
-import '../../../core/services/api_client.dart';
-import '../models/auth_models.dart';
 
 /// Talks to `POST /auth/login` and `POST /auth/signup`.
 ///
@@ -28,7 +27,7 @@ class AuthService {
   }
 
   Future<AuthSession> signup(SignupDraft draft) async {
-    final Map<String, dynamic> fields = <String, dynamic>{
+    final fields = <String, dynamic>{
       'email': draft.email.trim(),
       'password': draft.password,
       'name': draft.name.trim(),
@@ -42,12 +41,12 @@ class AuthService {
 
     // Omit rather than send empty — `bio` is optional and an empty string is
     // noise in the database.
-    final String bio = draft.bio.trim();
+    final bio = draft.bio.trim();
     if (bio.isNotEmpty) {
       fields['bio'] = bio;
     }
 
-    final PickedImage? idCard = draft.idCardPhoto;
+    final idCard = draft.idCardPhoto;
     if (idCard == null) {
       // Guarded in the UI too, but failing here keeps the service honest if it
       // is ever called from somewhere else.
@@ -55,9 +54,12 @@ class AuthService {
     }
     fields['idCardPhoto'] = ApiClient.imagePart(idCard.bytes, idCard.filename);
 
-    final PickedImage? avatar = draft.profilePhoto;
+    final avatar = draft.profilePhoto;
     if (avatar != null) {
-      fields['profilePhoto'] = ApiClient.imagePart(avatar.bytes, avatar.filename);
+      fields['profilePhoto'] = ApiClient.imagePart(
+        avatar.bytes,
+        avatar.filename,
+      );
     }
 
     final dynamic data = await _api.post(

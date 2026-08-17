@@ -1,19 +1,19 @@
+import 'package:connectappfe/core/router/app_routes.dart';
+import 'package:connectappfe/core/state/refresh_with_error_report.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/app_animated_size.dart';
+import 'package:connectappfe/core/widgets/async_view.dart';
+import 'package:connectappfe/core/widgets/brand_mark.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
+import 'package:connectappfe/core/widgets/skeleton.dart';
+import 'package:connectappfe/core/widgets/user_avatar.dart';
+import 'package:connectappfe/features/feed/models/post.dart';
+import 'package:connectappfe/features/feed/state/feed_controller.dart';
+import 'package:connectappfe/features/feed/widgets/post_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/router/app_routes.dart';
-import '../../../core/state/refresh_with_error_report.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/async_view.dart';
-import '../../../core/widgets/brand_mark.dart';
-import '../../../core/widgets/fade_slide_in.dart';
-import '../../../core/widgets/skeleton.dart';
-import '../../../core/widgets/user_avatar.dart';
-import '../models/post.dart';
-import '../state/feed_controller.dart';
-import '../widgets/post_card.dart';
 
 /// Chronological feed of posts from the user's connections, plus their own.
 class FeedScreen extends StatefulWidget {
@@ -46,9 +46,8 @@ class _FeedScreenState extends State<FeedScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    final ScrollDirection direction =
-        _scrollController.position.userScrollDirection;
-    final bool shouldExtend = direction != ScrollDirection.reverse;
+    final direction = _scrollController.position.userScrollDirection;
+    final shouldExtend = direction != ScrollDirection.reverse;
     if (shouldExtend != _fabExtended) {
       setState(() => _fabExtended = shouldExtend);
     }
@@ -64,13 +63,13 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final FeedController feed = context.watch<FeedController>();
+    final feed = context.watch<FeedController>();
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: AppSpacing.gutter,
-        title: Row(
-          children: const <Widget>[
+        title: const Row(
+          children: <Widget>[
             BrandMark(size: 28, heroTag: null),
             SizedBox(width: AppSpacing.xs),
             BrandWordmark(fontSize: 20),
@@ -80,9 +79,8 @@ class _FeedScreenState extends State<FeedScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoutes.composePost),
         icon: const Icon(Icons.edit_outlined),
-        label: AnimatedSize(
-          duration: context.motion(AppMotion.base),
-          curve: AppMotion.emphasized,
+        label: AppAnimatedSize(
+          alignment: Alignment.centerLeft,
           child: _fabExtended
               ? const Padding(
                   padding: EdgeInsets.only(left: 2),
@@ -95,10 +93,10 @@ class _FeedScreenState extends State<FeedScreen> {
         onRefresh: () => refreshWithErrorReport(context, feed),
         child: AsyncView<List<Post>>(
           controller: feed,
-          isEmpty: (List<Post> data) => data.isEmpty,
+          isEmpty: (data) => data.isEmpty,
           loadingPlaceholder: SkeletonList(
             count: 3,
-            itemBuilder: (BuildContext context) => const PostSkeleton(),
+            itemBuilder: (context) => const PostSkeleton(),
           ),
           emptyIcon: Icons.dynamic_feed_outlined,
           emptyTitle: 'Your feed is quiet',
@@ -107,7 +105,7 @@ class _FeedScreenState extends State<FeedScreen> {
               'first one, or find peers in Search.',
           emptyActionLabel: 'Write a post',
           onEmptyAction: () => context.push(AppRoutes.composePost),
-          builder: (BuildContext context, List<Post> posts) {
+          builder: (context, posts) {
             return ListView.separated(
               controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(
@@ -119,9 +117,9 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
               itemCount: posts.length,
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-              itemBuilder: (BuildContext context, int index) {
-                final Post post = posts[index];
-                final bool alreadyShown = _played.consume(post.id);
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                final alreadyShown = _played.consume(post.id);
                 return FadeSlideIn(
                   // Keyed by post id so a newly created post animates in on its
                   // own rather than the whole list replaying.

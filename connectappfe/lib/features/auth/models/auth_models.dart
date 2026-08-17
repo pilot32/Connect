@@ -1,4 +1,4 @@
-import '../../../core/models/models.dart';
+import 'package:connectappfe/core/models/models.dart';
 
 export '../../../core/models/models.dart';
 
@@ -6,10 +6,6 @@ export '../../../core/models/models.dart';
 /// Login omits `profile`; signup includes it.
 class AuthSession {
   const AuthSession({required this.token, required this.user, this.profile});
-
-  final String token;
-  final AuthUser user;
-  final UserProfile? profile;
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
     final Object? profileJson = json['profile'];
@@ -23,6 +19,10 @@ class AuthSession {
           : null,
     );
   }
+
+  final String token;
+  final AuthUser user;
+  final UserProfile? profile;
 }
 
 /// Everything `POST /auth/signup` needs, gathered across the signup wizard's

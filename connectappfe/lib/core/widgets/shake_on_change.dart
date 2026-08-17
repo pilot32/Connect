@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
 /// of only a colour change — the motion is what the eye actually catches.
 class ShakeOnChange extends StatefulWidget {
   const ShakeOnChange({
-    super.key,
     required this.trigger,
     required this.child,
+    super.key,
     this.amplitude = 9,
     this.duration = const Duration(milliseconds: 420),
   });
@@ -52,10 +52,11 @@ class _ShakeOnChangeState extends State<ShakeOnChange>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (BuildContext context, Widget? child) {
+      builder: (context, child) {
         // Three decaying oscillations: sharp at first, settling to nothing.
-        final double decay = 1 - _controller.value;
-        final double dx = math.sin(_controller.value * math.pi * 6) *
+        final decay = 1 - _controller.value;
+        final dx =
+            math.sin(_controller.value * math.pi * 6) *
             widget.amplitude *
             decay;
         return Transform.translate(offset: Offset(dx, 0), child: child);

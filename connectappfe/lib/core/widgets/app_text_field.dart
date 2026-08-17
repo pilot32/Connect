@@ -1,7 +1,6 @@
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../theme/app_tokens.dart';
 
 /// Text input with an always-visible label and an animated focus treatment.
 ///
@@ -10,8 +9,8 @@ import '../theme/app_tokens.dart';
 /// readable while scanning a long column, where floating labels do not.
 class AppTextField extends StatefulWidget {
   const AppTextField({
-    super.key,
     required this.label,
+    super.key,
     this.controller,
     this.hint,
     this.validator,
@@ -68,8 +67,8 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme scheme = theme.colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +76,9 @@ class _AppTextFieldState extends State<AppTextField> {
         AnimatedDefaultTextStyle(
           duration: context.motion(AppMotion.fast),
           style: (theme.textTheme.labelMedium ?? const TextStyle()).copyWith(
-            color: _focused ? scheme.primary : theme.textTheme.labelMedium?.color,
+            color: _focused
+                ? scheme.primary
+                : theme.textTheme.labelMedium?.color,
           ),
           child: Text(widget.label),
         ),

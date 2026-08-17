@@ -1,6 +1,5 @@
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
-
-import '../theme/app_tokens.dart';
 
 /// Remembers which item ids have already played their [FadeSlideIn] entrance.
 ///
@@ -32,8 +31,8 @@ class PlayedOnceTracker {
 /// (`context.stagger(index)`) to get the cascade.
 class FadeSlideIn extends StatefulWidget {
   const FadeSlideIn({
-    super.key,
     required this.child,
+    super.key,
     this.delay = Duration.zero,
     this.duration = AppMotion.slow,
     this.offset = 20,
@@ -100,14 +99,13 @@ class _FadeSlideInState extends State<FadeSlideIn>
     // disposed to remove it, which is easy to forget when it's built fresh
     // every `build()` call (as here). A driven animation is a stateless proxy
     // with nothing to leak.
-    final Animation<double> eased =
-        _controller.drive(CurveTween(curve: widget.curve));
-    final double? scaleFrom = widget.scaleFrom;
+    final eased = _controller.drive(CurveTween(curve: widget.curve));
+    final scaleFrom = widget.scaleFrom;
 
     return AnimatedBuilder(
       animation: eased,
-      builder: (BuildContext context, Widget? child) {
-        final double t = eased.value;
+      builder: (context, child) {
+        final t = eased.value;
         Widget result = Transform.translate(
           offset: Offset(0, widget.offset * (1 - t)),
           child: child,

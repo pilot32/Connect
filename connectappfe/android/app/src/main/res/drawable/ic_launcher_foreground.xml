@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Connecting network lines -->
+    <path
+        android:pathData="M38,67.5 L70,67.5"
+        android:strokeColor="#8CFFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,37.5 L38,67.5"
+        android:strokeColor="#8CFFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,37.5 L70,67.5"
+        android:strokeColor="#8CFFFFFF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round" />
+
+    <!-- Bottom Left Node (White) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 38,62.3 A 5.2,5.2 0 1,0 38,72.7 A 5.2,5.2 0 1,0 38,62.3 Z" />
+
+    <!-- Bottom Right Node (White) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 70,62.3 A 5.2,5.2 0 1,0 70,72.7 A 5.2,5.2 0 1,0 70,62.3 Z" />
+
+    <!-- Apex Focal Node (Gold/Accent) -->
+    <path
+        android:fillColor="#D9A648"
+        android:pathData="M 54,31.3 A 6.2,6.2 0 1,0 54,43.7 A 6.2,6.2 0 1,0 54,31.3 Z" />
+</vector>

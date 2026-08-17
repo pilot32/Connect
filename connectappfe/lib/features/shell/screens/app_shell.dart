@@ -1,26 +1,28 @@
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/features/connections/state/connections_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/theme/app_tokens.dart';
-import '../../connections/state/connections_controller.dart';
 
 /// Bottom-navigation host for the four main tabs.
 ///
 /// Backed by go_router's [StatefulNavigationShell], so each tab keeps its own
 /// navigation stack and scroll position when you switch away and back.
 class AppShell extends StatelessWidget {
-  const AppShell({super.key, required this.navigationShell});
+  const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
     // Watched so the requests badge updates the moment a request arrives or is
     // actioned anywhere in the app.
-    final int pending =
-        context.watch<ConnectionsController>().requests.incoming.length;
+    final pending = context
+        .watch<ConnectionsController>()
+        .requests
+        .incoming
+        .length;
 
     return Scaffold(
       body: navigationShell,
@@ -30,7 +32,7 @@ class AppShell extends StatelessWidget {
         ),
         child: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (int index) => navigationShell.goBranch(
+          onDestinationSelected: (index) => navigationShell.goBranch(
             index,
             // Tapping the current tab again pops it back to its root, which is
             // the platform convention users expect.
@@ -78,9 +80,9 @@ class AppShell extends StatelessWidget {
 /// painted until the fade completes.
 class AnimatedBranchContainer extends StatelessWidget {
   const AnimatedBranchContainer({
-    super.key,
     required this.currentIndex,
     required this.children,
+    super.key,
   });
 
   final int currentIndex;
@@ -89,8 +91,8 @@ class AnimatedBranchContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: children.mapIndexed((int index, Widget child) {
-        final bool active = index == currentIndex;
+      children: children.mapIndexed((index, child) {
+        final active = index == currentIndex;
         return AnimatedSlide(
           offset: Offset(0, active ? 0 : 0.012),
           duration: context.motion(AppMotion.base),
@@ -140,7 +142,7 @@ class _BranchGate extends StatelessWidget {
 
 extension _IndexedMap<E> on List<E> {
   Iterable<T> mapIndexed<T>(T Function(int index, E element) transform) sync* {
-    for (int i = 0; i < length; i++) {
+    for (var i = 0; i < length; i++) {
       yield transform(i, this[i]);
     }
   }
@@ -149,14 +151,14 @@ extension _IndexedMap<E> on List<E> {
 /// Wraps an icon with a count bubble that springs in, morphs as the number
 /// changes, and shrinks away when it reaches zero.
 class CountBadge extends StatelessWidget {
-  const CountBadge({super.key, required this.count, required this.child});
+  const CountBadge({required this.count, required this.child, super.key});
 
   final int count;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Stack(
       clipBehavior: Clip.none,
@@ -182,8 +184,7 @@ class CountBadge extends StatelessWidget {
               curve: count > 0 ? AppMotion.overshoot : AppMotion.exit,
               child: AnimatedSwitcher(
                 duration: context.motion(AppMotion.base),
-                transitionBuilder: (Widget child, Animation<double> animation) =>
-                    FadeTransition(
+                transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: SizeTransition(
                     sizeFactor: animation,
@@ -193,8 +194,10 @@ class CountBadge extends StatelessWidget {
                 ),
                 child: Container(
                   key: ValueKey<int>(count),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
                   constraints: const BoxConstraints(minWidth: 17),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(

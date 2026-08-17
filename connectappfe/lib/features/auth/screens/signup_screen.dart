@@ -1,21 +1,21 @@
+import 'package:connectappfe/core/router/app_routes.dart';
+import 'package:connectappfe/core/services/api_exception.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/utils/validators.dart';
+import 'package:connectappfe/core/widgets/app_animated_size.dart';
+import 'package:connectappfe/core/widgets/app_button.dart';
+import 'package:connectappfe/core/widgets/app_text_field.dart';
+import 'package:connectappfe/core/widgets/auth_shell.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
+import 'package:connectappfe/core/widgets/image_picker_field.dart';
+import 'package:connectappfe/core/widgets/shake_on_change.dart';
+import 'package:connectappfe/core/widgets/status_banner.dart';
+import 'package:connectappfe/features/auth/models/auth_models.dart';
+import 'package:connectappfe/features/auth/state/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/router/app_routes.dart';
-import '../../../core/services/api_exception.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/utils/validators.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_text_field.dart';
-import '../../../core/widgets/auth_shell.dart';
-import '../../../core/widgets/fade_slide_in.dart';
-import '../../../core/widgets/image_picker_field.dart';
-import '../../../core/widgets/shake_on_change.dart';
-import '../../../core/widgets/status_banner.dart';
-import '../models/auth_models.dart';
-import '../state/auth_controller.dart';
 
 /// Three-step signup wizard.
 ///
@@ -63,7 +63,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   void dispose() {
     _pageController.dispose();
-    for (final TextEditingController controller in <TextEditingController>[
+    for (final controller in <TextEditingController>[
       _email,
       _password,
       _confirmPassword,
@@ -82,11 +82,17 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _goToStep(int step) {
     setState(() => _step = step);
-    _pageController.animateToPage(
-      step,
-      duration: context.motion(AppMotion.slow),
-      curve: AppMotion.emphasized,
-    );
+    if (!_pageController.hasClients) return;
+    final duration = context.motion(AppMotion.slow);
+    if (duration == Duration.zero) {
+      _pageController.jumpToPage(step);
+    } else {
+      _pageController.animateToPage(
+        step,
+        duration: duration,
+        curve: AppMotion.emphasized,
+      );
+    }
   }
 
   void _showError(String message) {
@@ -127,12 +133,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _buttonState = AppButtonState.loading);
 
-    final SignupDraft draft = SignupDraft()
+    final draft = SignupDraft()
       ..email = _email.text
       ..password = _password.text
       ..name = _name.text
       ..designation = _designation.text
-      ..service = _service == _otherService ? _customService.text : (_service ?? '')
+      ..service = _service == _otherService
+          ? _customService.text
+          : (_service ?? '')
       ..department = _department.text
       ..stateOrCadre = _stateOrCadre.text
       ..yearsInService = _yearsInService.text
@@ -163,7 +171,7 @@ class _SignupScreenState extends State<SignupScreen> {
   /// ago; sending them back to it beats showing an error next to inputs that
   /// aren't the problem.
   void _jumpToOffendingStep(ApiException error) {
-    const Map<String, int> fieldStep = <String, int>{
+    const fieldStep = <String, int>{
       'email': 0,
       'password': 0,
       'name': 1,
@@ -181,22 +189,22 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    final Map<String, String>? fields = error.fieldErrors;
+    final fields = error.fieldErrors;
     if (fields == null || fields.isEmpty) return;
 
     int? target;
-    for (final String field in fields.keys) {
-      final int? step = fieldStep[field];
+    for (final field in fields.keys) {
+      final step = fieldStep[field];
       if (step != null && (target == null || step < target)) target = step;
     }
     if (target != null && target != _step) _goToStep(target);
   }
 
   String get _primaryLabel => switch (_step) {
-        0 => 'Continue',
-        1 => 'Continue',
-        _ => 'Create account',
-      };
+    0 => 'Continue',
+    1 => 'Continue',
+    _ => 'Create account',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +212,7 @@ class _SignupScreenState extends State<SignupScreen> {
       // Intercept back so it walks the wizard backwards instead of abandoning
       // a half-filled form.
       canPop: _step == 0 && !_busy,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop && !_busy) _onBack();
       },
       child: AuthShell(
@@ -238,7 +246,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     bio: _bio,
                     customService: _customService,
                     service: _service,
-                    onServiceChanged: (String? value) =>
+                    onServiceChanged: (value) =>
                         setState(() => _service = value),
                     enabled: !_busy,
                     error: _step == 1 ? _error : null,
@@ -247,9 +255,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   _VerificationStep(
                     idCardPhoto: _idCardPhoto,
                     profilePhoto: _profilePhoto,
-                    onIdCardChanged: (PickedImage? value) =>
+                    onIdCardChanged: (value) =>
                         setState(() => _idCardPhoto = value),
-                    onProfilePhotoChanged: (PickedImage? value) =>
+                    onProfilePhotoChanged: (value) =>
                         setState(() => _profilePhoto = value),
                     enabled: !_busy,
                     error: _step == 2 ? _error : null,
@@ -272,10 +280,10 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   String get _stepSubtitle => switch (_step) {
-        0 => 'Step 1 of 3 · Account credentials',
-        1 => 'Step 2 of 3 · Your posting details',
-        _ => 'Step 3 of 3 · Identity verification',
-      };
+    0 => 'Step 1 of 3 · Account credentials',
+    1 => 'Step 2 of 3 · Your posting details',
+    _ => 'Step 3 of 3 · Identity verification',
+  };
 }
 
 const String _otherService = 'Other';
@@ -534,7 +542,7 @@ class _ServiceSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return FormField<String>(
       initialValue: value,
@@ -545,7 +553,7 @@ class _ServiceSelector extends StatelessWidget {
         }
         return null;
       },
-      builder: (FormFieldState<String> field) {
+      builder: (field) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -554,8 +562,8 @@ class _ServiceSelector extends StatelessWidget {
             Wrap(
               spacing: AppSpacing.xs,
               runSpacing: AppSpacing.xs,
-              children: _options.map((String option) {
-                final bool selected = value == option;
+              children: _options.map((option) {
+                final selected = value == option;
                 return ChoiceChip(
                   label: Text(option),
                   selected: selected,
@@ -581,10 +589,7 @@ class _ServiceSelector extends StatelessWidget {
                 );
               }).toList(),
             ),
-            AnimatedSize(
-              duration: context.motion(AppMotion.base),
-              curve: AppMotion.emphasized,
-              alignment: Alignment.topCenter,
+            AppAnimatedSize(
               child: value == _otherService
                   ? Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.sm),
@@ -604,8 +609,9 @@ class _ServiceSelector extends StatelessWidget {
                 padding: const EdgeInsets.only(top: AppSpacing.xxs),
                 child: Text(
                   field.errorText!,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.error),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
                 ),
               ),
           ],
@@ -638,7 +644,7 @@ class _VerificationStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return _StepScroll(
       child: ShakeOnChange(
@@ -724,7 +730,7 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -741,8 +747,8 @@ class _Footer extends StatelessWidget {
         children: <Widget>[
           Row(
             mainAxisSize: MainAxisSize.min,
-            children: List<Widget>.generate(stepCount, (int index) {
-              final bool active = index <= step;
+            children: List<Widget>.generate(stepCount, (index) {
+              final active = index <= step;
               return AnimatedContainer(
                 duration: context.motion(AppMotion.base),
                 curve: AppMotion.emphasized,

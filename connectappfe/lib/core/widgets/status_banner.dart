@@ -1,7 +1,7 @@
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/app_animated_size.dart';
 import 'package:flutter/material.dart';
-
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
 enum StatusTone { error, success, info }
 
@@ -11,8 +11,8 @@ enum StatusTone { error, success, info }
 /// inputs the user is about to fix, instead of vanishing on a timer.
 class StatusBanner extends StatelessWidget {
   const StatusBanner({
-    super.key,
     required this.message,
+    super.key,
     this.tone = StatusTone.error,
   });
 
@@ -22,39 +22,36 @@ class StatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     final (Color fg, Color bg, IconData icon) = switch (tone) {
       StatusTone.error => (
-          AppColors.error,
-          AppColors.errorWash,
-          Icons.error_outline_rounded,
-        ),
+        AppColors.error,
+        AppColors.errorWash,
+        Icons.error_outline_rounded,
+      ),
       StatusTone.success => (
-          AppColors.success,
-          AppColors.successWash,
-          Icons.check_circle_outline_rounded,
-        ),
+        AppColors.success,
+        AppColors.successWash,
+        Icons.check_circle_outline_rounded,
+      ),
       StatusTone.info => (
-          AppColors.brand,
-          AppColors.brandWash,
-          Icons.info_outline_rounded,
-        ),
+        AppColors.brand,
+        AppColors.brandWash,
+        Icons.info_outline_rounded,
+      ),
     };
 
-    return AnimatedSize(
-      duration: context.motion(AppMotion.base),
-      curve: AppMotion.emphasized,
-      alignment: Alignment.topCenter,
+    return AppAnimatedSize(
       child: AnimatedSwitcher(
         duration: context.motion(AppMotion.base),
         switchInCurve: AppMotion.enter,
-        transitionBuilder: (Widget child, Animation<double> animation) {
+        transitionBuilder: (child, animation) {
           return FadeTransition(
             opacity: animation,
             child: SizeTransition(
               sizeFactor: animation,
-              alignment: Alignment.topCenter,
+              axisAlignment: -1,
               child: child,
             ),
           );

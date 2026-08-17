@@ -1,9 +1,10 @@
+import 'package:connectappfe/core/services/api_client.dart';
+import 'package:connectappfe/core/services/api_exception.dart'
+    show ApiException;
+import 'package:connectappfe/core/services/storage_service.dart';
+import 'package:connectappfe/features/auth/models/auth_models.dart';
+import 'package:connectappfe/features/auth/services/auth_service.dart';
 import 'package:flutter/foundation.dart';
-
-import '../../../core/services/api_client.dart';
-import '../../../core/services/storage_service.dart';
-import '../models/auth_models.dart';
-import '../services/auth_service.dart';
 
 enum AuthStatus {
   /// Still reading the stored token — the router shows a splash rather than
@@ -22,8 +23,8 @@ class AuthController extends ChangeNotifier {
     required AuthService authService,
     required StorageService storage,
     required ApiClient apiClient,
-  })  : _authService = authService,
-        _storage = storage {
+  }) : _authService = authService,
+       _storage = storage {
     apiClient.onUnauthorized = _handleUnauthorized;
   }
 
@@ -52,7 +53,7 @@ class AuthController extends ChangeNotifier {
   /// paints a single frame.
   Future<void> bootstrap() async {
     try {
-      final String? token = await _storage.readToken();
+      final token = await _storage.readToken();
       if (token == null || token.isEmpty) {
         _status = AuthStatus.unauthenticated;
         notifyListeners();
@@ -61,8 +62,8 @@ class AuthController extends ChangeNotifier {
 
       // We trust the stored token until the server says otherwise; the first
       // authenticated request will 401 and tear the session down if it's stale.
-      final String? id = await _storage.readUserId();
-      final String? email = await _storage.readEmail();
+      final id = await _storage.readUserId();
+      final email = await _storage.readEmail();
       _user = AuthUser(id: id ?? '', email: email ?? '');
       _status = AuthStatus.authenticated;
       notifyListeners();
@@ -85,8 +86,10 @@ class AuthController extends ChangeNotifier {
   Future<void> login({required String email, required String password}) async {
     _setSubmitting(true);
     try {
-      final AuthSession session =
-          await _authService.login(email: email, password: password);
+      final session = await _authService.login(
+        email: email,
+        password: password,
+      );
       await _adopt(session);
     } finally {
       _setSubmitting(false);
@@ -96,7 +99,7 @@ class AuthController extends ChangeNotifier {
   Future<void> signup(SignupDraft draft) async {
     _setSubmitting(true);
     try {
-      final AuthSession session = await _authService.signup(draft);
+      final session = await _authService.signup(draft);
       await _adopt(session);
     } finally {
       _setSubmitting(false);

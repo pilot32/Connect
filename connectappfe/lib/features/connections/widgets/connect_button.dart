@@ -1,8 +1,7 @@
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/features/connections/state/connections_controller.dart';
 import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../state/connections_controller.dart';
 
 /// Compact action reflecting the current relationship with someone.
 ///
@@ -11,9 +10,9 @@ import '../state/connections_controller.dart';
 /// the server would reject with a 409.
 class ConnectButton extends StatelessWidget {
   const ConnectButton({
-    super.key,
     required this.userId,
     required this.controller,
+    super.key,
     this.onError,
   });
 
@@ -23,58 +22,57 @@ class ConnectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final LinkStatus state = controller.statusFor(userId);
-    final String? actionId = controller.actionableIdFor(userId);
-    final bool busy =
-        controller.isBusy(userId) || (actionId != null && controller.isBusy(actionId));
+    final theme = Theme.of(context);
+    final state = controller.statusFor(userId);
+    final actionId = controller.actionableIdFor(userId);
+    final busy =
+        controller.isBusy(userId) ||
+        (actionId != null && controller.isBusy(actionId));
 
     Future<void> send() async {
-      final String? failure = await controller.sendRequest(userId);
+      final failure = await controller.sendRequest(userId);
       if (failure != null) onError?.call(failure);
     }
 
     final Widget child = switch (state) {
       LinkStatus.none => _Pill(
-          key: const ValueKey<String>('connect'),
-          label: 'Connect',
-          icon: Icons.person_add_alt_1_rounded,
-          filled: true,
-          busy: busy,
-          onTap: send,
-        ),
+        key: const ValueKey<String>('connect'),
+        label: 'Connect',
+        icon: Icons.person_add_alt_1_rounded,
+        filled: true,
+        busy: busy,
+        onTap: send,
+      ),
       LinkStatus.outgoing => _Pill(
-          key: const ValueKey<String>('pending'),
-          label: 'Pending',
-          icon: Icons.schedule_rounded,
-          filled: false,
-          busy: busy,
-          // Tapping a pending request cancels it — the only way to re-request
-          // later, since any surviving row blocks a new one.
-          onTap: actionId == null
-              ? null
-              : () async {
-                  final String? failure = await controller.remove(actionId);
-                  if (failure != null) onError?.call(failure);
-                },
-        ),
+        key: const ValueKey<String>('pending'),
+        label: 'Pending',
+        icon: Icons.schedule_rounded,
+        filled: false,
+        busy: busy,
+        // Tapping a pending request cancels it — the only way to re-request
+        // later, since any surviving row blocks a new one.
+        onTap: actionId == null
+            ? null
+            : () async {
+                final failure = await controller.remove(actionId);
+                if (failure != null) onError?.call(failure);
+              },
+      ),
       LinkStatus.incoming => _Pill(
-          key: const ValueKey<String>('respond'),
-          label: 'Respond',
-          icon: Icons.mark_email_unread_outlined,
-          filled: true,
-          busy: busy,
-          onTap: null,
-        ),
+        key: const ValueKey<String>('respond'),
+        label: 'Respond',
+        icon: Icons.mark_email_unread_outlined,
+        filled: true,
+        busy: busy,
+      ),
       LinkStatus.connected => _Pill(
-          key: const ValueKey<String>('connected'),
-          label: 'Connected',
-          icon: Icons.check_circle_rounded,
-          filled: false,
-          tint: AppColors.success,
-          busy: busy,
-          onTap: null,
-        ),
+        key: const ValueKey<String>('connected'),
+        label: 'Connected',
+        icon: Icons.check_circle_rounded,
+        filled: false,
+        tint: AppColors.success,
+        busy: busy,
+      ),
     };
 
     return DefaultTextStyle(
@@ -91,7 +89,7 @@ class ConnectButton extends StatelessWidget {
       child: AnimatedSwitcher(
         duration: context.motion(AppMotion.base),
         switchInCurve: AppMotion.emphasized,
-        transitionBuilder: (Widget child, Animation<double> animation) {
+        transitionBuilder: (child, animation) {
           return FadeTransition(
             opacity: animation,
             child: ScaleTransition(
@@ -108,11 +106,11 @@ class ConnectButton extends StatelessWidget {
 
 class _Pill extends StatelessWidget {
   const _Pill({
-    super.key,
     required this.label,
     required this.icon,
     required this.filled,
     required this.busy,
+    super.key,
     this.onTap,
     this.tint,
   });
@@ -126,8 +124,8 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color accent = tint ?? theme.colorScheme.primary;
+    final theme = Theme.of(context);
+    final accent = tint ?? theme.colorScheme.primary;
 
     return Material(
       color: filled ? accent : accent.withValues(alpha: 0.08),

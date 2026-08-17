@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/app_animated_size.dart';
+import 'package:connectappfe/core/widgets/brand_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
-import 'brand_mark.dart';
 
 /// Shared chrome for the login and signup screens.
 ///
@@ -15,10 +15,10 @@ import 'brand_mark.dart';
 /// overflow a fixed-height header would cause.
 class AuthShell extends StatefulWidget {
   const AuthShell({
-    super.key,
     required this.title,
     required this.subtitle,
     required this.child,
+    super.key,
     this.onBack,
     this.progress,
   });
@@ -70,8 +70,8 @@ class _AuthShellState extends State<AuthShell>
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    final theme = Theme.of(context);
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -85,10 +85,7 @@ class _AuthShellState extends State<AuthShell>
               bottom: false,
               child: Column(
                 children: <Widget>[
-                  AnimatedSize(
-                    duration: context.motion(AppMotion.base),
-                    curve: AppMotion.emphasized,
-                    alignment: Alignment.topCenter,
+                  AppAnimatedSize(
                     child: _Header(
                       title: widget.title,
                       subtitle: widget.subtitle,
@@ -146,7 +143,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -173,14 +170,14 @@ class _Header extends StatelessWidget {
             ),
           ),
           if (!compact) ...<Widget>[
-            Row(
+            const Row(
               children: <Widget>[
-                const BrandMark(size: 52),
-                const SizedBox(width: kBrandBlockGap),
+                BrandMark(size: 52),
+                SizedBox(width: kBrandBlockGap),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-                  children: const <Widget>[
+                  children: <Widget>[
                     BrandWordmark(color: Colors.white),
                     SizedBox(height: 2),
                     BrandTagline(),
@@ -241,8 +238,8 @@ class _AuroraBlobs extends StatelessWidget {
     return IgnorePointer(
       child: AnimatedBuilder(
         animation: animation,
-        builder: (BuildContext context, _) {
-          final double t = animation.value;
+        builder: (context, _) {
+          final t = animation.value;
           return Stack(
             children: <Widget>[
               Positioned(
@@ -298,7 +295,7 @@ class _WizardProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       child: SizedBox(
@@ -311,7 +308,7 @@ class _WizardProgress extends StatelessWidget {
               ),
             ),
             LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
+              builder: (context, constraints) {
                 return AnimatedContainer(
                   duration: context.motion(AppMotion.slow),
                   curve: AppMotion.emphasized,

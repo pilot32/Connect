@@ -1,14 +1,13 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_exception.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/app_button.dart';
+import 'package:connectappfe/core/widgets/image_picker_field.dart';
+import 'package:connectappfe/core/widgets/shake_on_change.dart';
+import 'package:connectappfe/core/widgets/status_banner.dart';
+import 'package:connectappfe/features/feed/state/feed_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/models/models.dart';
-import '../../../core/services/api_exception.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/image_picker_field.dart';
-import '../../../core/widgets/shake_on_change.dart';
-import '../../../core/widgets/status_banner.dart';
-import '../state/feed_controller.dart';
 
 /// Post composer. Content is required (1–2000 chars); a photo is optional.
 class ComposePostScreen extends StatefulWidget {
@@ -48,7 +47,7 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
   }
 
   Future<void> _submit() async {
-    final String content = _content.text.trim();
+    final content = _content.text.trim();
     if (content.isEmpty) {
       setState(() {
         _error = 'Write something before posting.';
@@ -63,9 +62,10 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
     });
 
     try {
-      await context
-          .read<FeedController>()
-          .createPost(content: content, photo: _photo);
+      await context.read<FeedController>().createPost(
+        content: content,
+        photo: _photo,
+      );
       if (!mounted) return;
       setState(() => _buttonState = AppButtonState.success);
       await Future<void>.delayed(const Duration(milliseconds: 450));
@@ -90,8 +90,8 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final int remaining = _maxLength - _content.text.characters.length;
+    final theme = Theme.of(context);
+    final remaining = _maxLength - _content.text.characters.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -128,7 +128,9 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
                         enabled: !_busy,
                         autofocus: true,
                         textCapitalization: TextCapitalization.sentences,
-                        style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          height: 1.45,
+                        ),
                         decoration: const InputDecoration(
                           hintText: 'Share an update with your network…',
                           filled: false,
@@ -144,8 +146,7 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
                         label: 'Photo (optional)',
                         helper: 'Add an image to your post.',
                         value: _photo,
-                        onChanged: (PickedImage? value) =>
-                            setState(() => _photo = value),
+                        onChanged: (value) => setState(() => _photo = value),
                         icon: Icons.add_photo_alternate_outlined,
                         enabled: !_busy,
                       ),
@@ -155,7 +156,7 @@ class _ComposePostScreenState extends State<ComposePostScreen> {
               ),
             ),
             Container(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.gutter,
                 AppSpacing.sm,
                 AppSpacing.gutter,

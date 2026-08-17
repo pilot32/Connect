@@ -1,4 +1,4 @@
-import '../../../core/models/models.dart';
+import 'package:connectappfe/core/models/models.dart';
 
 /// A feed post from `GET /feed` / `POST /feed`.
 class Post {
@@ -9,12 +9,6 @@ class Post {
     this.photoUrl,
     this.createdAt,
   });
-
-  final String id;
-  final String content;
-  final PublicUser author;
-  final String? photoUrl;
-  final DateTime? createdAt;
 
   factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
@@ -28,4 +22,10 @@ class Post {
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
     );
   }
+
+  final String id;
+  final String content;
+  final PublicUser author;
+  final String? photoUrl;
+  final DateTime? createdAt;
 }

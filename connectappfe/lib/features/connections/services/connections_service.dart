@@ -1,6 +1,6 @@
-import '../../../core/config/api_config.dart';
-import '../../../core/services/api_client.dart';
-import '../models/connection_models.dart';
+import 'package:connectappfe/core/config/api_config.dart';
+import 'package:connectappfe/core/services/api_client.dart';
+import 'package:connectappfe/features/connections/models/connection_models.dart';
 
 /// The `/connections` endpoints: list, request, accept, decline, remove.
 class ConnectionsService {
@@ -14,8 +14,7 @@ class ConnectionsService {
     if (data is! List) return <NetworkConnection>[];
     return data
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> e) =>
-            NetworkConnection.fromJson(e.cast<String, dynamic>()))
+        .map((e) => NetworkConnection.fromJson(e.cast<String, dynamic>()))
         .toList();
   }
 

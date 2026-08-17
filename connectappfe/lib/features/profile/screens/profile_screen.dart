@@ -1,17 +1,16 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/router/app_routes.dart';
+import 'package:connectappfe/core/state/refresh_with_error_report.dart';
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/async_view.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
+import 'package:connectappfe/features/auth/state/auth_controller.dart';
+import 'package:connectappfe/features/profile/state/profile_controller.dart';
+import 'package:connectappfe/features/profile/widgets/profile_header.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/models/models.dart';
-import '../../../core/router/app_routes.dart';
-import '../../../core/state/refresh_with_error_report.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/async_view.dart';
-import '../../../core/widgets/fade_slide_in.dart';
-import '../../auth/state/auth_controller.dart';
-import '../state/profile_controller.dart';
-import '../widgets/profile_header.dart';
 
 /// The signed-in user's own profile, with edit and sign-out.
 class ProfileScreen extends StatefulWidget {
@@ -32,12 +31,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _confirmSignOut() async {
-    final bool? confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Sign out?'),
-          content: const Text("You'll need your email and password to sign back in."),
+          content: const Text(
+            "You'll need your email and password to sign back in.",
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -61,8 +62,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ProfileController controller = context.watch<ProfileController>();
+    final theme = Theme.of(context);
+    final controller = context.watch<ProfileController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -81,12 +82,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onRefresh: () => refreshWithErrorReport(context, controller),
         child: AsyncView<MyProfile>(
           controller: controller,
-          isEmpty: (MyProfile data) => false,
+          isEmpty: (data) => false,
           emptyIcon: Icons.person_off_outlined,
           emptyTitle: 'No profile',
           emptyMessage: 'We could not find your profile.',
-          builder: (BuildContext context, MyProfile me) {
-            final UserProfile? profile = me.profile;
+          builder: (context, me) {
+            final profile = me.profile;
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(
@@ -118,7 +119,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                if (profile != null && (profile.bio ?? '').isNotEmpty) ...<Widget>[
+                if (profile != null &&
+                    (profile.bio ?? '').isNotEmpty) ...<Widget>[
                   FadeSlideIn(
                     delay: AppMotion.stagger,
                     child: _Section(
@@ -187,8 +189,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),

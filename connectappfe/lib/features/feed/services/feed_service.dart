@@ -1,9 +1,8 @@
+import 'package:connectappfe/core/config/api_config.dart';
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_client.dart';
+import 'package:connectappfe/features/feed/models/post.dart';
 import 'package:dio/dio.dart';
-
-import '../../../core/config/api_config.dart';
-import '../../../core/models/models.dart';
-import '../../../core/services/api_client.dart';
-import '../models/post.dart';
 
 /// `GET /feed` and `POST /feed`.
 class FeedService {
@@ -18,12 +17,12 @@ class FeedService {
     if (data is! List) return <Post>[];
     return data
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> e) => Post.fromJson(e.cast<String, dynamic>()))
+        .map((e) => Post.fromJson(e.cast<String, dynamic>()))
         .toList();
   }
 
   Future<Post> createPost({required String content, PickedImage? photo}) async {
-    final Map<String, dynamic> fields = <String, dynamic>{
+    final fields = <String, dynamic>{
       'content': content.trim(),
     };
     if (photo != null) {

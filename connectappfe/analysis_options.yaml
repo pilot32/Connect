@@ -17,3 +17,10 @@ linter:
   rules:
     # Personal solo adjustments can go here (e.g., turning off rules you dislike)
     public_member_api_docs: false # Disables mandatory documentation for every single function
+    discarded_futures: false
+    lines_longer_than_80_chars: false
+    avoid_catches_without_on_clauses: false
+    cascade_invocations: false
+    comment_references: false
+    sort_pub_dependencies: false
+    join_return_with_assignment: false

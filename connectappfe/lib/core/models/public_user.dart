@@ -1,4 +1,4 @@
-import 'user_profile.dart';
+import 'package:connectappfe/core/models/user_profile.dart';
 
 /// The `{ id, profile }` shape the API uses wherever it refers to *another*
 /// official: directory results, connection parties, and feed post authors.
@@ -6,14 +6,6 @@ import 'user_profile.dart';
 /// No email — that is only ever returned for the requester's own account.
 class PublicUser {
   const PublicUser({required this.id, this.profile});
-
-  final String id;
-
-  /// Nullable because the backend serialises `profile: null` if a user somehow
-  /// has no profile row, rather than omitting the entry.
-  final UserProfile? profile;
-
-  String get displayName => profile?.name ?? 'Unknown official';
 
   factory PublicUser.fromJson(Map<String, dynamic> json) {
     final Object? profileJson = json['profile'];
@@ -24,6 +16,14 @@ class PublicUser {
           : null,
     );
   }
+
+  final String id;
+
+  /// Nullable because the backend serialises `profile: null` if a user somehow
+  /// has no profile row, rather than omitting the entry.
+  final UserProfile? profile;
+
+  String get displayName => profile?.name ?? 'Unknown official';
 }
 
 /// The signed-in user's own profile: `GET /profile/me` returns account *and*
@@ -31,12 +31,8 @@ class PublicUser {
 class MyProfile {
   const MyProfile({required this.id, required this.email, this.profile});
 
-  final String id;
-  final String email;
-  final UserProfile? profile;
-
   factory MyProfile.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> user =
+    final user =
         (json['user'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
     final Object? profileJson = json['profile'];
     return MyProfile(
@@ -47,4 +43,8 @@ class MyProfile {
           : null,
     );
   }
+
+  final String id;
+  final String email;
+  final UserProfile? profile;
 }

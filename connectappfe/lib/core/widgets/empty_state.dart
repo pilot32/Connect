@@ -1,10 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/app_button.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
 import 'package:flutter/material.dart';
-
-import '../theme/app_tokens.dart';
-import 'app_button.dart';
-import 'fade_slide_in.dart';
 
 /// Centred illustration-free empty/error placeholder.
 ///
@@ -13,10 +12,10 @@ import 'fade_slide_in.dart';
 /// to explain the next action rather than just saying "nothing here".
 class EmptyState extends StatelessWidget {
   const EmptyState({
-    super.key,
     required this.icon,
     required this.title,
     required this.message,
+    super.key,
     this.actionLabel,
     this.onAction,
     this.tone = EmptyStateTone.neutral,
@@ -31,13 +30,13 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color accent = tone == EmptyStateTone.error
+    final theme = Theme.of(context);
+    final accent = tone == EmptyStateTone.error
         ? theme.colorScheme.error
         : theme.colorScheme.primary;
 
     return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
+      builder: (context, constraints) {
         return SingleChildScrollView(
           // Always scrollable so RefreshIndicator still works on an empty list.
           physics: const AlwaysScrollableScrollPhysics(),
@@ -140,8 +139,8 @@ class _FloatingIconState extends State<_FloatingIcon>
 
     return AnimatedBuilder(
       animation: _controller,
-      builder: (BuildContext context, Widget? child) {
-        final double t = Curves.easeInOut.transform(_controller.value);
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_controller.value);
         return Transform.translate(
           offset: Offset(0, math.sin(t * math.pi) * -5),
           child: child,

@@ -1,20 +1,20 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/router/app_routes.dart';
+import 'package:connectappfe/core/state/refresh_with_error_report.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/app_animated_size.dart';
+import 'package:connectappfe/core/widgets/app_text_field.dart';
+import 'package:connectappfe/core/widgets/async_view.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
+import 'package:connectappfe/core/widgets/skeleton.dart';
+import 'package:connectappfe/core/widgets/user_avatar.dart';
+import 'package:connectappfe/core/widgets/user_list_tile.dart';
+import 'package:connectappfe/features/connections/state/connections_controller.dart';
+import 'package:connectappfe/features/connections/widgets/connect_button.dart';
+import 'package:connectappfe/features/directory/state/directory_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/models/models.dart';
-import '../../../core/router/app_routes.dart';
-import '../../../core/state/refresh_with_error_report.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/app_text_field.dart';
-import '../../../core/widgets/async_view.dart';
-import '../../../core/widgets/fade_slide_in.dart';
-import '../../../core/widgets/skeleton.dart';
-import '../../../core/widgets/user_avatar.dart';
-import '../../../core/widgets/user_list_tile.dart';
-import '../../connections/state/connections_controller.dart';
-import '../../connections/widgets/connect_button.dart';
-import '../state/directory_controller.dart';
 
 /// Browse and filter officials — presented to users as "Search".
 ///
@@ -66,38 +66,44 @@ class _SearchScreenState extends State<SearchScreen> {
   /// while the new ones fetch), so a failure needs the same explicit surfacing
   /// as pull-to-refresh — otherwise tapping a chip that fails to load just
   /// silently leaves the old results showing with no explanation.
-  Future<void> _applyFilters({String? service, String? department, String? state}) async {
-    final DirectoryController controller = context.read<DirectoryController>();
+  Future<void> _applyFilters({
+    String? service,
+    String? department,
+    String? state,
+  }) async {
+    final controller = context.read<DirectoryController>();
     _played.reset();
     await controller.applyFilters(
       service: service,
       department: department,
       state: state,
     );
-    final String? failure = controller.consumeSilentError();
+    final failure = controller.consumeSilentError();
     if (failure != null) _showError(failure);
   }
 
   Future<void> _clearFilters() async {
-    final DirectoryController controller = context.read<DirectoryController>();
+    final controller = context.read<DirectoryController>();
     _played.reset();
     await controller.clearFilters();
-    final String? failure = controller.consumeSilentError();
+    final failure = controller.consumeSilentError();
     if (failure != null) _showError(failure);
   }
 
   Future<void> _openFilterSheet() async {
-    final DirectoryController controller = context.read<DirectoryController>();
-    final TextEditingController department =
-        TextEditingController(text: controller.departmentFilter);
-    final TextEditingController state =
-        TextEditingController(text: controller.stateFilter);
+    final controller = context.read<DirectoryController>();
+    final department = TextEditingController(
+      text: controller.departmentFilter,
+    );
+    final state = TextEditingController(
+      text: controller.stateFilter,
+    );
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (BuildContext sheetContext) {
+      builder: (sheetContext) {
         return Padding(
           padding: EdgeInsets.only(
             left: AppSpacing.gutter,
@@ -173,9 +179,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final DirectoryController directory = context.watch<DirectoryController>();
-    final ConnectionsController connections =
-        context.watch<ConnectionsController>();
+    final directory = context.watch<DirectoryController>();
+    final connections = context.watch<ConnectionsController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -197,8 +202,9 @@ class _SearchScreenState extends State<SearchScreen> {
             height: 46,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.gutter,
+              ),
               children: <Widget>[
                 for (int i = 0; i < _services.length; i++)
                   Padding(
@@ -211,7 +217,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: _ServiceChip(
                         label: _services[i],
                         selected: directory.serviceFilter == _services[i],
-                        onSelected: (bool selected) => _applyFilters(
+                        onSelected: (selected) => _applyFilters(
                           service: selected ? _services[i] : '',
                         ),
                       ),
@@ -228,7 +234,7 @@ class _SearchScreenState extends State<SearchScreen> {
               onRefresh: () => refreshWithErrorReport(context, directory),
               child: AsyncView<List<PublicUser>>(
                 controller: directory,
-                isEmpty: (List<PublicUser> data) => data.isEmpty,
+                isEmpty: (data) => data.isEmpty,
                 loadingPlaceholder: SkeletonList(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.gutter,
@@ -236,19 +242,18 @@ class _SearchScreenState extends State<SearchScreen> {
                     AppSpacing.gutter,
                     AppSpacing.xxl,
                   ),
-                  itemBuilder: (BuildContext context) =>
-                      const UserTileSkeleton(),
+                  itemBuilder: (context) => const UserTileSkeleton(),
                 ),
                 emptyIcon: Icons.search_off_rounded,
-                emptyTitle:
-                    directory.hasFilters ? 'No matches' : 'Nobody to show yet',
+                emptyTitle: directory.hasFilters
+                    ? 'No matches'
+                    : 'Nobody to show yet',
                 emptyMessage: directory.hasFilters
                     ? 'No officials match these filters. Try widening your search.'
                     : 'No officials have signed up yet.',
                 emptyActionLabel: directory.hasFilters ? 'Clear filters' : null,
-                onEmptyAction:
-                    directory.hasFilters ? _clearFilters : null,
-                builder: (BuildContext context, List<PublicUser> people) {
+                onEmptyAction: directory.hasFilters ? _clearFilters : null,
+                builder: (context, people) {
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.gutter,
@@ -259,15 +264,17 @@ class _SearchScreenState extends State<SearchScreen> {
                     itemCount: people.length,
                     separatorBuilder: (_, _) =>
                         const SizedBox(height: AppSpacing.xs),
-                    itemBuilder: (BuildContext context, int index) {
-                      final PublicUser person = people[index];
+                    itemBuilder: (context, index) {
+                      final person = people[index];
                       // `_played` is reset on every filter change, so a new
                       // result set still replays; recycling within the same
                       // set (scrolling) does not.
-                      final bool alreadyShown = _played.consume(person.id);
+                      final alreadyShown = _played.consume(person.id);
                       return FadeSlideIn(
                         key: ValueKey<String>('search-${person.id}'),
-                        delay: alreadyShown ? Duration.zero : context.stagger(index),
+                        delay: alreadyShown
+                            ? Duration.zero
+                            : context.stagger(index),
                         duration: alreadyShown ? Duration.zero : AppMotion.slow,
                         scaleFrom: 0.97,
                         child: UserListTile(
@@ -311,7 +318,7 @@ class _ServiceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return AnimatedScale(
       scale: selected ? 1.04 : 1,
@@ -360,9 +367,8 @@ class _RefineIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: context.motion(AppMotion.fast),
-      curve: AppMotion.emphasized,
+    return AppAnimatedSize(
+      duration: AppMotion.fast,
       child: SizedBox(
         height: active ? 2 : 0,
         width: double.infinity,
@@ -380,7 +386,7 @@ class _FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Stack(
       clipBehavior: Clip.none,
@@ -404,7 +410,7 @@ class _FilterButton extends StatelessWidget {
               curve: count > 0 ? AppMotion.overshoot : AppMotion.exit,
               child: AnimatedSwitcher(
                 duration: context.motion(AppMotion.base),
-                transitionBuilder: (Widget child, Animation<double> animation) =>
+                transitionBuilder: (child, animation) =>
                     ScaleTransition(scale: animation, child: child),
                 child: Container(
                   key: ValueKey<int>(count),

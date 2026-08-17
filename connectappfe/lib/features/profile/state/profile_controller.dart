@@ -1,6 +1,8 @@
-import '../../../core/models/models.dart';
-import '../../../core/state/load_controller.dart';
-import '../services/profile_service.dart';
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_exception.dart'
+    show ApiException;
+import 'package:connectappfe/core/state/load_controller.dart';
+import 'package:connectappfe/features/profile/services/profile_service.dart';
 
 /// The signed-in user's own profile.
 class ProfileController extends LoadController<MyProfile> {
@@ -23,7 +25,7 @@ class ProfileController extends LoadController<MyProfile> {
     String? bio,
     PickedImage? photo,
   }) async {
-    final MyProfile updated = await _service.updateMyProfile(
+    final updated = await _service.updateMyProfile(
       name: name,
       designation: designation,
       service: service,

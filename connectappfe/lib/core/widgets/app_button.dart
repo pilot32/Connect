@@ -1,6 +1,5 @@
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
-
-import '../theme/app_tokens.dart';
 
 enum AppButtonState { idle, loading, success }
 
@@ -11,9 +10,9 @@ enum AppButtonState { idle, loading, success }
 /// then confirm, rather than leaving the user wondering whether the tap landed.
 class AppButton extends StatefulWidget {
   const AppButton({
-    super.key,
     required this.label,
     required this.onPressed,
+    super.key,
     this.state = AppButtonState.idle,
     this.icon,
     this.expand = true,
@@ -39,10 +38,10 @@ class _AppButtonState extends State<AppButton> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme scheme = theme.colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
-    final Color background = switch (widget.state) {
+    final background = switch (widget.state) {
       AppButtonState.success => scheme.tertiary,
       _ => scheme.primary,
     };
@@ -54,7 +53,7 @@ class _AppButtonState extends State<AppButton> {
     // node keeps announcing `widget.label` plus `button`/`enabled` regardless
     // of which visual child is showing; ExcludeSemantics stops the descendant
     // Text/Icon from being announced a second time underneath it.
-    final String semanticsValue = switch (widget.state) {
+    final semanticsValue = switch (widget.state) {
       AppButtonState.loading => 'Loading',
       AppButtonState.success => 'Done',
       AppButtonState.idle => '',
@@ -64,7 +63,7 @@ class _AppButtonState extends State<AppButton> {
       duration: context.motion(AppMotion.base),
       switchInCurve: AppMotion.emphasized,
       switchOutCurve: AppMotion.exit,
-      transitionBuilder: (Widget child, Animation<double> animation) {
+      transitionBuilder: (child, animation) {
         return FadeTransition(
           opacity: animation,
           child: ScaleTransition(
@@ -75,32 +74,32 @@ class _AppButtonState extends State<AppButton> {
       },
       child: switch (widget.state) {
         AppButtonState.loading => const SizedBox(
-            key: ValueKey<String>('loading'),
-            height: 22,
-            width: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.4,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
+          key: ValueKey<String>('loading'),
+          height: 22,
+          width: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.4,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
           ),
+        ),
         AppButtonState.success => const Icon(
-            Icons.check_rounded,
-            key: ValueKey<String>('success'),
-            color: Colors.white,
-            size: 26,
-          ),
+          Icons.check_rounded,
+          key: ValueKey<String>('success'),
+          color: Colors.white,
+          size: 26,
+        ),
         AppButtonState.idle => Row(
-            key: const ValueKey<String>('idle'),
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(widget.label),
-              if (widget.icon != null) ...<Widget>[
-                const SizedBox(width: AppSpacing.xs),
-                Icon(widget.icon, size: 19),
-              ],
+          key: const ValueKey<String>('idle'),
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(widget.label),
+            if (widget.icon != null) ...<Widget>[
+              const SizedBox(width: AppSpacing.xs),
+              Icon(widget.icon, size: 19),
             ],
-          ),
+          ],
+        ),
       },
     );
 
@@ -145,11 +144,12 @@ class _AppButtonState extends State<AppButton> {
               ),
               child: Center(
                 child: DefaultTextStyle(
-                  style: (theme.textTheme.labelLarge ?? const TextStyle()).copyWith(
-                    color: _enabled || _busy
-                        ? Colors.white
-                        : scheme.onSurface.withValues(alpha: 0.4),
-                  ),
+                  style: (theme.textTheme.labelLarge ?? const TextStyle())
+                      .copyWith(
+                        color: _enabled || _busy
+                            ? Colors.white
+                            : scheme.onSurface.withValues(alpha: 0.4),
+                      ),
                   child: content,
                 ),
               ),

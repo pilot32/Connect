@@ -1,10 +1,9 @@
+import 'package:connectappfe/core/config/api_config.dart';
+import 'package:connectappfe/core/config/env.dart';
+import 'package:connectappfe/core/services/api_exception.dart';
+import 'package:connectappfe/core/services/storage_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-
-import '../config/api_config.dart';
-import '../config/env.dart';
-import 'api_exception.dart';
-import 'storage_service.dart';
 
 /// Thin wrapper over Dio that owns cross-cutting HTTP concerns: base URL,
 /// timeouts, bearer-token injection, and translating [DioException] into the
@@ -14,8 +13,8 @@ import 'storage_service.dart';
 /// transport or adding retry/logging later touches one file.
 class ApiClient {
   ApiClient({required StorageService storage, Dio? dio})
-      : _storage = storage,
-        _dio = dio ?? Dio() {
+    : _storage = storage,
+      _dio = dio ?? Dio() {
     _dio.options = _dio.options.copyWith(
       baseUrl: AppEnv.apiBaseUrl,
       connectTimeout: ApiConfig.connectTimeout,
@@ -23,20 +22,19 @@ class ApiClient {
       sendTimeout: ApiConfig.sendTimeout,
       // Let non-2xx through to the error interceptor rather than throwing
       // opaquely, so ApiException can read the server's `error` field.
-      validateStatus: (int? status) => status != null && status < 400,
+      validateStatus: (status) => status != null && status < 400,
     );
 
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (RequestOptions options, RequestInterceptorHandler handler) async {
-          final String? token =
-              _storage.cachedToken ?? await _storage.readToken();
+        onRequest: (options, handler) async {
+          final token = _storage.cachedToken ?? await _storage.readToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
           handler.next(options);
         },
-        onError: (DioException error, ErrorInterceptorHandler handler) {
+        onError: (error, handler) {
           if (error.response?.statusCode == 401) {
             // Token expired or rejected — let the app tear the session down
             // instead of leaving the UI in a half-authenticated state.
@@ -49,7 +47,7 @@ class ApiClient {
 
     if (kDebugMode) {
       _dio.interceptors.add(
-        LogInterceptor(requestBody: false, responseBody: false),
+        LogInterceptor(),
       );
     }
   }
@@ -65,8 +63,7 @@ class ApiClient {
   Future<dynamic> get(
     String path, {
     Map<String, dynamic>? query,
-  }) =>
-      _send(() => _dio.get<dynamic>(path, queryParameters: query));
+  }) => _send(() => _dio.get<dynamic>(path, queryParameters: query));
 
   Future<dynamic> post(String path, {Object? data}) =>
       _send(() => _dio.post<dynamic>(path, data: data));
@@ -79,7 +76,7 @@ class ApiClient {
 
   Future<dynamic> _send(Future<Response<dynamic>> Function() request) async {
     try {
-      final Response<dynamic> response = await request();
+      final response = await request();
       return response.data;
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
@@ -101,9 +98,8 @@ class ApiClient {
   }
 
   static String _imageSubtype(String filename) {
-    final int dot = filename.lastIndexOf('.');
-    final String ext =
-        dot == -1 ? '' : filename.substring(dot + 1).toLowerCase();
+    final dot = filename.lastIndexOf('.');
+    final ext = dot == -1 ? '' : filename.substring(dot + 1).toLowerCase();
     return switch (ext) {
       'png' => 'png',
       'webp' => 'webp',

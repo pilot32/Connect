@@ -1,18 +1,17 @@
+import 'package:connectappfe/core/router/app_routes.dart';
+import 'package:connectappfe/core/state/refresh_with_error_report.dart';
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/async_view.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
+import 'package:connectappfe/core/widgets/skeleton.dart';
+import 'package:connectappfe/core/widgets/user_avatar.dart';
+import 'package:connectappfe/core/widgets/user_list_tile.dart';
+import 'package:connectappfe/features/connections/models/connection_models.dart';
+import 'package:connectappfe/features/connections/state/connections_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/router/app_routes.dart';
-import '../../../core/state/refresh_with_error_report.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/async_view.dart';
-import '../../../core/widgets/fade_slide_in.dart';
-import '../../../core/widgets/skeleton.dart';
-import '../../../core/widgets/user_avatar.dart';
-import '../../../core/widgets/user_list_tile.dart';
-import '../models/connection_models.dart';
-import '../state/connections_controller.dart';
 
 /// "My Network" and pending requests, split across two tabs.
 ///
@@ -60,10 +59,9 @@ class _ConnectionsScreenState extends State<ConnectionsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ConnectionsController controller =
-        context.watch<ConnectionsController>();
-    final int pendingCount = controller.requests.incoming.length;
+    final theme = Theme.of(context);
+    final controller = context.watch<ConnectionsController>();
+    final pendingCount = controller.requests.incoming.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -142,9 +140,9 @@ class _NetworkTab extends StatelessWidget {
     BuildContext context,
     NetworkConnection connection,
   ) async {
-    final bool? confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext dialogContext) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Remove connection?'),
           content: Text(
@@ -176,9 +174,9 @@ class _NetworkTab extends StatelessWidget {
       onRefresh: () => refreshWithErrorReport(context, controller),
       child: AsyncView<ConnectionsData>(
         controller: controller,
-        isEmpty: (ConnectionsData data) => data.network.isEmpty,
+        isEmpty: (data) => data.network.isEmpty,
         loadingPlaceholder: SkeletonList(
-          itemBuilder: (BuildContext context) => const UserTileSkeleton(),
+          itemBuilder: (context) => const UserTileSkeleton(),
         ),
         emptyIcon: Icons.people_outline_rounded,
         emptyTitle: 'No connections yet',
@@ -187,7 +185,7 @@ class _NetworkTab extends StatelessWidget {
             'start building your network.',
         emptyActionLabel: 'Open search',
         onEmptyAction: () => context.go(AppRoutes.search),
-        builder: (BuildContext context, ConnectionsData data) {
+        builder: (context, data) {
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.gutter,
@@ -197,9 +195,9 @@ class _NetworkTab extends StatelessWidget {
             ),
             itemCount: data.network.length,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
-            itemBuilder: (BuildContext context, int index) {
-              final NetworkConnection connection = data.network[index];
-              final bool alreadyShown = played.consume(connection.connectionId);
+            itemBuilder: (context, index) {
+              final connection = data.network[index];
+              final alreadyShown = played.consume(connection.connectionId);
               return FadeSlideIn(
                 // Keyed so removing one connection animates the rest into
                 // place instead of the whole list replaying its entrance.
@@ -250,19 +248,19 @@ class _RequestsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return RefreshIndicator(
       onRefresh: () => refreshWithErrorReport(context, controller),
       child: AsyncView<ConnectionsData>(
         controller: controller,
-        isEmpty: (ConnectionsData data) => data.requests.total == 0,
+        isEmpty: (data) => data.requests.total == 0,
         emptyIcon: Icons.inbox_outlined,
         emptyTitle: 'No pending requests',
         emptyMessage:
             'Connection requests you send or receive will show up here.',
-        builder: (BuildContext context, ConnectionsData data) {
-          final PendingRequests requests = data.requests;
+        builder: (context, data) {
+          final requests = data.requests;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(
@@ -279,15 +277,22 @@ class _RequestsTab extends StatelessWidget {
                 ),
                 for (int i = 0; i < requests.incoming.length; i++)
                   Padding(
-                    key: ValueKey<String>('incoming-${requests.incoming[i].requestId}'),
+                    key: ValueKey<String>(
+                      'incoming-${requests.incoming[i].requestId}',
+                    ),
                     padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                     child: Builder(
-                      builder: (BuildContext context) {
-                        final bool alreadyShown =
-                            played.consume(requests.incoming[i].requestId);
+                      builder: (context) {
+                        final alreadyShown = played.consume(
+                          requests.incoming[i].requestId,
+                        );
                         return FadeSlideIn(
-                          delay: alreadyShown ? Duration.zero : context.stagger(i),
-                          duration: alreadyShown ? Duration.zero : AppMotion.slow,
+                          delay: alreadyShown
+                              ? Duration.zero
+                              : context.stagger(i),
+                          duration: alreadyShown
+                              ? Duration.zero
+                              : AppMotion.slow,
                           child: _IncomingCard(
                             request: requests.incoming[i],
                             controller: controller,
@@ -316,12 +321,12 @@ class _RequestsTab extends StatelessWidget {
                       trailing: TextButton(
                         onPressed:
                             controller.isBusy(requests.outgoing[i].requestId)
-                                ? null
-                                : () async => onError(
-                                      await controller.remove(
-                                        requests.outgoing[i].requestId,
-                                      ),
-                                    ),
+                            ? null
+                            : () async => onError(
+                                await controller.remove(
+                                  requests.outgoing[i].requestId,
+                                ),
+                              ),
                         style: TextButton.styleFrom(
                           foregroundColor: theme.colorScheme.error,
                         ),
@@ -372,15 +377,17 @@ class _IncomingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool busy = controller.isBusy(request.requestId);
+    final theme = Theme.of(context);
+    final busy = controller.isBusy(request.requestId);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.35),
+        ),
       ),
       child: Column(
         children: <Widget>[
@@ -395,8 +402,9 @@ class _IncomingCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: busy
                       ? null
-                      : () async =>
-                          onError(await controller.decline(request.requestId)),
+                      : () async => onError(
+                          await controller.decline(request.requestId),
+                        ),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(44),
                   ),
@@ -409,7 +417,7 @@ class _IncomingCard extends StatelessWidget {
                   onPressed: busy
                       ? null
                       : () async =>
-                          onError(await controller.accept(request.requestId)),
+                            onError(await controller.accept(request.requestId)),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(44),
                   ),
@@ -419,8 +427,9 @@ class _IncomingCard extends StatelessWidget {
                           width: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text('Accept'),

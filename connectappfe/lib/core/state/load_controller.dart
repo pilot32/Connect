@@ -1,6 +1,5 @@
+import 'package:connectappfe/core/services/api_exception.dart';
 import 'package:flutter/foundation.dart';
-
-import '../services/api_exception.dart';
 
 enum LoadStatus { idle, loading, ready, error }
 
@@ -46,7 +45,7 @@ abstract class LoadController<T> extends ChangeNotifier {
   /// [silent] keeps existing data on screen while refetching, so a pull-to-
   /// refresh doesn't blank the list out and make the page jump.
   Future<void> load({bool silent = false}) async {
-    final int requestId = ++_requestId;
+    final requestId = ++_requestId;
 
     if (silent) {
       _isRefreshing = true;
@@ -91,8 +90,8 @@ abstract class LoadController<T> extends ChangeNotifier {
   /// has landed (or a silent refresh kept stale data on screen), later calls
   /// are no-ops, so tab bodies don't refetch every time the tab is reselected.
   Future<void> loadOnce() async {
-    final bool neverAttempted = _status == LoadStatus.idle;
-    final bool failedWithNothingToShow =
+    final neverAttempted = _status == LoadStatus.idle;
+    final failedWithNothingToShow =
         _status == LoadStatus.error && _data == null;
     if (!neverAttempted && !failedWithNothingToShow) return;
     await load();
@@ -102,7 +101,7 @@ abstract class LoadController<T> extends ChangeNotifier {
   /// then clears it, so a screen can show a snackbar exactly once per failure
   /// instead of on every rebuild.
   String? consumeSilentError() {
-    final String? message = _silentError;
+    final message = _silentError;
     _silentError = null;
     return message;
   }

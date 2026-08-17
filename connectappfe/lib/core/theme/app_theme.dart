@@ -1,8 +1,7 @@
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'app_colors.dart';
-import 'app_tokens.dart';
 
 /// The app's single [ThemeData].
 ///
@@ -21,9 +20,8 @@ class AppTheme {
   static ThemeData get light => _build();
 
   static ThemeData _build() {
-    const ColorScheme scheme = ColorScheme.light(
+    const scheme = ColorScheme.light(
       primary: AppColors.brand,
-      onPrimary: Colors.white,
       primaryContainer: AppColors.brandWash,
       onPrimaryContainer: AppColors.brandDeep,
       secondary: AppColors.accent,
@@ -33,10 +31,8 @@ class AppTheme {
       tertiary: AppColors.success,
       onTertiary: Colors.white,
       error: AppColors.error,
-      onError: Colors.white,
       errorContainer: AppColors.errorWash,
       onErrorContainer: Color(0xFF6E170F),
-      surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
       outline: AppColors.border,
       outlineVariant: Color(0xFFE8EEF5),
@@ -44,12 +40,12 @@ class AppTheme {
       onInverseSurface: Colors.white,
     );
 
-    const Color textPrimary = AppColors.textPrimary;
-    const Color textSecondary = AppColors.textSecondary;
-    const Color border = AppColors.border;
-    const Color fieldFill = AppColors.surfaceAlt;
+    const textPrimary = AppColors.textPrimary;
+    const textSecondary = AppColors.textSecondary;
+    const border = AppColors.border;
+    const fieldFill = AppColors.surfaceAlt;
 
-    const TextTheme textTheme = TextTheme(
+    const textTheme = TextTheme(
       displaySmall: TextStyle(
         fontSize: 34,
         height: 1.14,
@@ -175,7 +171,7 @@ class AppTheme {
         height: 66,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-          (Set<WidgetState> states) => TextStyle(
+          (states) => TextStyle(
             fontSize: 11.5,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w700
@@ -186,7 +182,7 @@ class AppTheme {
           ),
         ),
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-          (Set<WidgetState> states) => IconThemeData(
+          (states) => IconThemeData(
             size: 23,
             color: states.contains(WidgetState.selected)
                 ? AppColors.brand

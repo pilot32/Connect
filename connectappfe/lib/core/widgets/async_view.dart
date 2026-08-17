@@ -1,8 +1,7 @@
+import 'package:connectappfe/core/state/load_controller.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
-
-import '../state/load_controller.dart';
-import '../theme/app_tokens.dart';
-import 'empty_state.dart';
 
 /// Renders the four states of a [LoadController] consistently across features:
 /// loading, error with retry, empty, and data.
@@ -11,13 +10,13 @@ import 'empty_state.dart';
 /// nobody has to remember to handle the error branch.
 class AsyncView<T> extends StatelessWidget {
   const AsyncView({
-    super.key,
     required this.controller,
     required this.builder,
     required this.isEmpty,
     required this.emptyIcon,
     required this.emptyTitle,
     required this.emptyMessage,
+    super.key,
     this.emptyActionLabel,
     this.onEmptyAction,
     this.loadingPlaceholder,
@@ -42,7 +41,7 @@ class AsyncView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final T? data = controller.data;
+    final data = controller.data;
 
     final Widget child;
     // `idle` (before the screen's post-frame loadOnce() has even run) is
@@ -51,13 +50,15 @@ class AsyncView<T> extends StatelessWidget {
     // (falling through the branches below) and frame 2 swaps in loading —
     // a flash of "no data" that briefly outranks the real loading UI on
     // every cold start.
-    final bool showLoading = data == null &&
+    final showLoading =
+        data == null &&
         (controller.status == LoadStatus.loading ||
             controller.status == LoadStatus.idle);
     if (showLoading) {
       child = KeyedSubtree(
         key: const ValueKey<String>('loading'),
-        child: loadingPlaceholder ??
+        child:
+            loadingPlaceholder ??
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(AppSpacing.xxl),
@@ -73,7 +74,7 @@ class AsyncView<T> extends StatelessWidget {
         message: controller.error ?? 'Please try again.',
         tone: EmptyStateTone.error,
         actionLabel: 'Retry',
-        onAction: () => controller.load(),
+        onAction: controller.load,
       );
     } else if (data == null || isEmpty(data)) {
       child = EmptyState(
@@ -97,7 +98,7 @@ class AsyncView<T> extends StatelessWidget {
       switchOutCurve: AppMotion.exit,
       // Default layout stacks children centred, which fights a full-height
       // list; keep them top-aligned and full-bleed instead.
-      layoutBuilder: (Widget? current, List<Widget> previous) => Stack(
+      layoutBuilder: (current, previous) => Stack(
         alignment: Alignment.topCenter,
         children: <Widget>[
           ...previous,

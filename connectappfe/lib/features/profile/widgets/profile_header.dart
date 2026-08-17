@@ -1,16 +1,15 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
-
-import '../../../core/models/models.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/user_avatar.dart';
 
 /// Brand-gradient header card used by both the own-profile and public-profile
 /// screens, so a person's identity is presented identically either way.
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
-    super.key,
     required this.profile,
+    super.key,
     this.email,
     this.action,
     this.heroTag,
@@ -27,7 +26,7 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       width: double.infinity,
@@ -66,8 +65,9 @@ class ProfileHeader extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       profile?.name ?? '—',
-                      style: theme.textTheme.headlineSmall
-                          ?.copyWith(color: Colors.white),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                      ),
                     ),
                     if (profile != null && profile!.designation.isNotEmpty)
                       Padding(
@@ -154,10 +154,10 @@ class _Chip extends StatelessWidget {
 /// Label/value row used for the detail list beneath the header.
 class ProfileDetailRow extends StatelessWidget {
   const ProfileDetailRow({
-    super.key,
     required this.icon,
     required this.label,
     required this.value,
+    super.key,
   });
 
   final IconData icon;
@@ -166,7 +166,7 @@ class ProfileDetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

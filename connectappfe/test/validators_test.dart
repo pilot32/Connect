@@ -37,9 +37,8 @@ void main() {
 
   group('Validators.confirmPassword', () {
     test('matches against the live value of the original field', () {
-      String original = 'password123';
-      final String? Function(String?) validator =
-          Validators.confirmPassword(() => original);
+      var original = 'password123';
+      final validator = Validators.confirmPassword(() => original);
 
       expect(validator('password123'), isNull);
       expect(validator('nope'), isNotNull);
@@ -69,7 +68,7 @@ void main() {
 
   group('Validators.required', () {
     test('treats whitespace-only input as missing', () {
-      final String? Function(String?) validator = Validators.required('Name');
+      final validator = Validators.required('Name');
       expect(validator(null), 'Name is required');
       expect(validator('   '), 'Name is required');
       expect(validator('Asha'), isNull);
@@ -78,7 +77,7 @@ void main() {
 
   group('Validators.maxLength', () {
     test('allows values up to the limit', () {
-      final String? Function(String?) validator = Validators.maxLength(5);
+      final validator = Validators.maxLength(5);
       expect(validator(null), isNull);
       expect(validator('12345'), isNull);
       expect(validator('123456'), isNotNull);

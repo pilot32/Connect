@@ -1,6 +1,6 @@
-import '../../../core/config/api_config.dart';
-import '../../../core/models/models.dart';
-import '../../../core/services/api_client.dart';
+import 'package:connectappfe/core/config/api_config.dart';
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_client.dart';
 
 /// `GET /directory` — browse and filter officials.
 ///
@@ -17,9 +17,9 @@ class DirectoryService {
     String? department,
     String? state,
   }) async {
-    final Map<String, dynamic> query = <String, dynamic>{};
+    final query = <String, dynamic>{};
     void put(String key, String? value) {
-      final String trimmed = (value ?? '').trim();
+      final trimmed = (value ?? '').trim();
       if (trimmed.isNotEmpty) query[key] = trimmed;
     }
 
@@ -31,8 +31,7 @@ class DirectoryService {
     if (data is! List) return <PublicUser>[];
     return data
         .whereType<Map<dynamic, dynamic>>()
-        .map((Map<dynamic, dynamic> e) =>
-            PublicUser.fromJson(e.cast<String, dynamic>()))
+        .map((e) => PublicUser.fromJson(e.cast<String, dynamic>()))
         .toList();
   }
 }

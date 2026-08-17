@@ -1,6 +1,5 @@
+import 'package:connectappfe/core/state/load_controller.dart';
 import 'package:flutter/material.dart';
-
-import 'load_controller.dart';
 
 /// Runs a silent refresh and, if it failed, surfaces it as a snackbar.
 ///
@@ -14,7 +13,7 @@ Future<void> refreshWithErrorReport(
   LoadController<dynamic> controller,
 ) async {
   await controller.load(silent: true);
-  final String? message = controller.consumeSilentError();
+  final message = controller.consumeSilentError();
   if (message == null || !context.mounted) return;
 
   ScaffoldMessenger.of(context)

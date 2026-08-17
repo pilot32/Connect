@@ -1,15 +1,14 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
-
-import '../models/models.dart';
-import '../theme/app_tokens.dart';
-import 'user_avatar.dart';
 
 /// One official in a list — directory results, network, and pending requests
 /// all render through this so a person looks identical everywhere in the app.
 class UserListTile extends StatelessWidget {
   const UserListTile({
-    super.key,
     required this.user,
+    super.key,
     this.trailing,
     this.onTap,
     this.subtitleOverride,
@@ -30,10 +29,11 @@ class UserListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final UserProfile? profile = user.profile;
+    final theme = Theme.of(context);
+    final profile = user.profile;
 
-    final String secondary = subtitleOverride ??
+    final secondary =
+        subtitleOverride ??
         <String>[
           if (profile != null && profile.designation.isNotEmpty)
             profile.designation,

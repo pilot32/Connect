@@ -1,15 +1,14 @@
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/utils/relative_time.dart';
+import 'package:connectappfe/core/widgets/skeleton.dart';
+import 'package:connectappfe/core/widgets/user_avatar.dart';
+import 'package:connectappfe/features/feed/models/post.dart';
 import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/utils/relative_time.dart';
-import '../../../core/widgets/skeleton.dart';
-import '../../../core/widgets/user_avatar.dart';
-import '../models/post.dart';
 
 class PostCard extends StatelessWidget {
   const PostCard({
-    super.key,
     required this.post,
+    super.key,
     this.onAuthorTap,
     this.heroTag,
   });
@@ -22,8 +21,8 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final String? photo = post.photoUrl;
+    final theme = Theme.of(context);
+    final photo = post.photoUrl;
 
     return Container(
       decoration: BoxDecoration(
@@ -72,7 +71,7 @@ class PostCard extends StatelessWidget {
                           if (post.author.profile?.headline.isNotEmpty ?? false)
                             post.author.profile!.headline,
                           relativeTime(post.createdAt),
-                        ].where((String s) => s.isNotEmpty).join(' · '),
+                        ].where((s) => s.isNotEmpty).join(' · '),
                         style: theme.textTheme.bodySmall,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -105,32 +104,33 @@ class PostCard extends StatelessWidget {
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 // Fades the photo in over its shimmer once decoded, instead of
                 // the image snapping into place and shoving the layout.
-                frameBuilder: (
-                  BuildContext context,
-                  Widget child,
-                  int? frame,
-                  bool wasSynchronouslyLoaded,
-                ) {
-                  if (wasSynchronouslyLoaded) return child;
-                  return AnimatedSwitcher(
-                    duration: context.motion(AppMotion.slower),
-                    switchInCurve: AppMotion.enter,
-                    child: frame == null
-                        ? const SizedBox(
-                            key: ValueKey<String>('loading'),
-                            height: 190,
-                            width: double.infinity,
-                            child: SkeletonBox(
-                              height: 190,
-                              radius: 0,
-                            ),
-                          )
-                        : KeyedSubtree(
-                            key: const ValueKey<String>('image'),
-                            child: child,
-                          ),
-                  );
-                },
+                frameBuilder:
+                    (
+                      context,
+                      child,
+                      frame,
+                      wasSynchronouslyLoaded,
+                    ) {
+                      if (wasSynchronouslyLoaded) return child;
+                      return AnimatedSwitcher(
+                        duration: context.motion(AppMotion.slower),
+                        switchInCurve: AppMotion.enter,
+                        child: frame == null
+                            ? const SizedBox(
+                                key: ValueKey<String>('loading'),
+                                height: 190,
+                                width: double.infinity,
+                                child: SkeletonBox(
+                                  height: 190,
+                                  radius: 0,
+                                ),
+                              )
+                            : KeyedSubtree(
+                                key: const ValueKey<String>('image'),
+                                child: child,
+                              ),
+                      );
+                    },
               ),
             ),
         ],

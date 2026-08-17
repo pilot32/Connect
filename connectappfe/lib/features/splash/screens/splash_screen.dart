@@ -1,8 +1,9 @@
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/brand_mark.dart';
+import 'package:connectappfe/features/auth/state/auth_controller.dart'
+    show AuthController;
 import 'package:flutter/material.dart';
-
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/brand_mark.dart';
 
 /// Shown while [AuthController.bootstrap] reads the stored token.
 ///

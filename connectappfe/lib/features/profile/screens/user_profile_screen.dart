@@ -1,15 +1,14 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_exception.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/widgets/empty_state.dart';
+import 'package:connectappfe/core/widgets/fade_slide_in.dart';
+import 'package:connectappfe/features/connections/state/connections_controller.dart';
+import 'package:connectappfe/features/connections/widgets/connect_button.dart';
+import 'package:connectappfe/features/profile/services/profile_service.dart';
+import 'package:connectappfe/features/profile/widgets/profile_header.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/models/models.dart';
-import '../../../core/services/api_exception.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/empty_state.dart';
-import '../../../core/widgets/fade_slide_in.dart';
-import '../../connections/state/connections_controller.dart';
-import '../../connections/widgets/connect_button.dart';
-import '../services/profile_service.dart';
-import '../widgets/profile_header.dart';
 
 /// Another official's public profile (`GET /profile/:id`).
 ///
@@ -17,7 +16,7 @@ import '../widgets/profile_header.dart';
 /// pushed, transient screen and several can be stacked, so per-screen state
 /// keeps them independent.
 class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key, required this.userId, this.heroTag});
+  const UserProfileScreen({required this.userId, super.key, this.heroTag});
 
   final String userId;
 
@@ -45,8 +44,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       _error = null;
     });
     try {
-      final PublicUser user =
-          await context.read<ProfileService>().getProfileById(widget.userId);
+      final user = await context.read<ProfileService>().getProfileById(
+        widget.userId,
+      );
       if (!mounted) return;
       setState(() {
         _user = user;
@@ -76,16 +76,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ConnectionsController connections =
-        context.watch<ConnectionsController>();
+    final theme = Theme.of(context);
+    final connections = context.watch<ConnectionsController>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: Builder(
-        builder: (BuildContext context) {
+        builder: (context) {
           if (_loading) {
-            return const Center(child: CircularProgressIndicator(strokeWidth: 2.6));
+            return const Center(
+              child: CircularProgressIndicator(strokeWidth: 2.6),
+            );
           }
           if (_error != null || _user == null) {
             return EmptyState(
@@ -98,8 +99,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             );
           }
 
-          final PublicUser user = _user!;
-          final UserProfile? profile = user.profile;
+          final user = _user!;
+          final profile = user.profile;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(
@@ -124,7 +125,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              if (profile != null && (profile.bio ?? '').isNotEmpty) ...<Widget>[
+              if (profile != null &&
+                  (profile.bio ?? '').isNotEmpty) ...<Widget>[
                 FadeSlideIn(
                   delay: AppMotion.stagger,
                   child: _Card(
@@ -180,7 +182,7 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       width: double.infinity,

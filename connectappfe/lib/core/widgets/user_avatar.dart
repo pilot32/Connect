@@ -1,16 +1,15 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
-
-import '../models/models.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
 /// Circular avatar that falls back to initials on a brand-tinted disc when the
 /// user has no photo — which is common, since the profile photo is optional at
 /// signup.
 class UserAvatar extends StatelessWidget {
   const UserAvatar({
-    super.key,
     required this.profile,
+    super.key,
     this.size = 48,
     this.onLight = true,
     this.heroTag,
@@ -33,8 +32,8 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String initials = profile?.initials ?? '?';
-    final String? url = profile?.photoUrl;
+    final initials = profile?.initials ?? '?';
+    final url = profile?.photoUrl;
 
     final Widget fallback = Center(
       child: Text(
@@ -59,7 +58,10 @@ class UserAvatar extends StatelessWidget {
             : Colors.white.withValues(alpha: 0.18),
         border: onLight
             ? null
-            : Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+            : Border.all(
+                color: Colors.white.withValues(alpha: 0.35),
+                width: 1.5,
+              ),
       ),
       child: url == null || url.isEmpty
           ? fallback
@@ -67,28 +69,29 @@ class UserAvatar extends StatelessWidget {
               url,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => fallback,
-              frameBuilder: (
-                BuildContext context,
-                Widget child,
-                int? frame,
-                bool wasSynchronouslyLoaded,
-              ) {
-                if (wasSynchronouslyLoaded) return child;
-                // Cross-fade the photo in over the initials rather than
-                // popping, which is jarring in a scrolling list.
-                return AnimatedSwitcher(
-                  duration: context.motion(AppMotion.slow),
-                  child: frame == null
-                      ? KeyedSubtree(
-                          key: const ValueKey<String>('placeholder'),
-                          child: fallback,
-                        )
-                      : KeyedSubtree(
-                          key: const ValueKey<String>('photo'),
-                          child: child,
-                        ),
-                );
-              },
+              frameBuilder:
+                  (
+                    context,
+                    child,
+                    frame,
+                    wasSynchronouslyLoaded,
+                  ) {
+                    if (wasSynchronouslyLoaded) return child;
+                    // Cross-fade the photo in over the initials rather than
+                    // popping, which is jarring in a scrolling list.
+                    return AnimatedSwitcher(
+                      duration: context.motion(AppMotion.slow),
+                      child: frame == null
+                          ? KeyedSubtree(
+                              key: const ValueKey<String>('placeholder'),
+                              child: fallback,
+                            )
+                          : KeyedSubtree(
+                              key: const ValueKey<String>('photo'),
+                              child: child,
+                            ),
+                    );
+                  },
             ),
     );
 
@@ -97,14 +100,16 @@ class UserAvatar extends StatelessWidget {
         tag: heroTag!,
         // Keep it a circle mid-flight; the default rect tween would square it
         // off as the size interpolates.
-        flightShuttleBuilder: (
-          BuildContext flightContext,
-          Animation<double> animation,
-          HeroFlightDirection direction,
-          BuildContext fromContext,
-          BuildContext toContext,
-        ) =>
-            ClipOval(child: Material(type: MaterialType.transparency, child: avatar)),
+        flightShuttleBuilder:
+            (
+              flightContext,
+              animation,
+              direction,
+              fromContext,
+              toContext,
+            ) => ClipOval(
+              child: Material(type: MaterialType.transparency, child: avatar),
+            ),
         child: avatar,
       );
     }

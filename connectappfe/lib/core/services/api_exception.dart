@@ -8,16 +8,6 @@ import 'package:dio/dio.dart';
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode, this.fieldErrors});
 
-  final String message;
-  final int? statusCode;
-
-  /// Field name -> first validation message, derived from zod `details`.
-  /// Lets a form highlight the offending input instead of only showing a banner.
-  final Map<String, String>? fieldErrors;
-
-  bool get isUnauthorized => statusCode == 401;
-  bool get isConflict => statusCode == 409;
-
   factory ApiException.fromDio(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -41,11 +31,11 @@ class ApiException implements Exception {
         break;
     }
 
-    final Response<dynamic>? response = error.response;
-    final int? status = response?.statusCode;
+    final response = error.response;
+    final status = response?.statusCode;
     final dynamic data = response?.data;
 
-    String message = 'Something went wrong. Please try again.';
+    var message = 'Something went wrong. Please try again.';
     Map<String, String>? fieldErrors;
 
     if (data is Map) {
@@ -59,11 +49,21 @@ class ApiException implements Exception {
     return ApiException(message, statusCode: status, fieldErrors: fieldErrors);
   }
 
+  final String message;
+  final int? statusCode;
+
+  /// Field name -> first validation message, derived from zod `details`.
+  /// Lets a form highlight the offending input instead of only showing a banner.
+  final Map<String, String>? fieldErrors;
+
+  bool get isUnauthorized => statusCode == 401;
+  bool get isConflict => statusCode == 409;
+
   /// zod issues arrive as `[{ path: ["email"], message: "Invalid email" }, ...]`.
   static Map<String, String>? _parseFieldErrors(Object? details) {
     if (details is! List) return null;
 
-    final Map<String, String> parsed = <String, String>{};
+    final parsed = <String, String>{};
     for (final Object? issue in details) {
       if (issue is! Map) continue;
       final Object? path = issue['path'];

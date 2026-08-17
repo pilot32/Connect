@@ -1,6 +1,6 @@
-import '../../../core/models/models.dart';
-import '../../../core/state/load_controller.dart';
-import '../services/directory_service.dart';
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/state/load_controller.dart';
+import 'package:connectappfe/features/directory/services/directory_service.dart';
 
 /// Directory search with three optional, AND-combined filters.
 class DirectoryController extends LoadController<List<PublicUser>> {
@@ -26,10 +26,10 @@ class DirectoryController extends LoadController<List<PublicUser>> {
 
   @override
   Future<List<PublicUser>> fetch() => _service.search(
-        service: _service_,
-        department: _department,
-        state: _state,
-      );
+    service: _service_,
+    department: _department,
+    state: _state,
+  );
 
   /// Applies filters and refetches. [silent] keeps the current results visible
   /// while the new ones load, so the list doesn't flash empty on each tweak.

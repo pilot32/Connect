@@ -1,17 +1,16 @@
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_exception.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/core/utils/validators.dart';
+import 'package:connectappfe/core/widgets/app_button.dart';
+import 'package:connectappfe/core/widgets/app_text_field.dart';
+import 'package:connectappfe/core/widgets/image_picker_field.dart';
+import 'package:connectappfe/core/widgets/shake_on_change.dart';
+import 'package:connectappfe/core/widgets/status_banner.dart';
+import 'package:connectappfe/features/profile/state/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/models/models.dart';
-import '../../../core/services/api_exception.dart';
-import '../../../core/theme/app_tokens.dart';
-import '../../../core/utils/validators.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/app_text_field.dart';
-import '../../../core/widgets/image_picker_field.dart';
-import '../../../core/widgets/shake_on_change.dart';
-import '../../../core/widgets/status_banner.dart';
-import '../state/profile_controller.dart';
 
 /// Edits the signed-in user's profile via `PUT /profile/me`.
 ///
@@ -49,15 +48,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final UserProfile? p = context.read<ProfileController>().data?.profile;
+    final p = context.read<ProfileController>().data?.profile;
 
     _name = TextEditingController(text: p?.name ?? '');
     _designation = TextEditingController(text: p?.designation ?? '');
     _service = TextEditingController(text: p?.service ?? '');
     _department = TextEditingController(text: p?.department ?? '');
     _stateOrCadre = TextEditingController(text: p?.stateOrCadre ?? '');
-    _yearsInService =
-        TextEditingController(text: p == null ? '' : '${p.yearsInService}');
+    _yearsInService = TextEditingController(
+      text: p == null ? '' : '${p.yearsInService}',
+    );
     _bio = TextEditingController(text: p?.bio ?? '');
 
     _initial = <String, String>{
@@ -73,7 +73,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
-    for (final TextEditingController c in <TextEditingController>[
+    for (final c in <TextEditingController>[
       _name,
       _designation,
       _service,
@@ -89,7 +89,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   /// Null when unchanged, so the service omits the field entirely.
   String? _changed(String key, TextEditingController controller) {
-    final String current = controller.text.trim();
+    final current = controller.text.trim();
     return current == _initial[key]!.trim() ? null : current;
   }
 
@@ -97,8 +97,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final String? years = _changed('yearsInService', _yearsInService);
-    final Map<String, String?> diff = <String, String?>{
+    final years = _changed('yearsInService', _yearsInService);
+    final diff = <String, String?>{
       'name': _changed('name', _name),
       'designation': _changed('designation', _designation),
       'service': _changed('service', _service),
@@ -107,8 +107,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'bio': _changed('bio', _bio),
     };
 
-    final bool nothingChanged =
-        diff.values.every((String? v) => v == null) && years == null && _photo == null;
+    final nothingChanged =
+        diff.values.every((v) => v == null) && years == null && _photo == null;
     if (nothingChanged) {
       setState(() {
         _error = 'Nothing to save — no changes made.';
@@ -124,15 +124,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       await context.read<ProfileController>().update(
-            name: diff['name'],
-            designation: diff['designation'],
-            service: diff['service'],
-            department: diff['department'],
-            stateOrCadre: diff['stateOrCadre'],
-            yearsInService: years == null ? null : int.tryParse(years),
-            bio: diff['bio'],
-            photo: _photo,
-          );
+        name: diff['name'],
+        designation: diff['designation'],
+        service: diff['service'],
+        department: diff['department'],
+        stateOrCadre: diff['stateOrCadre'],
+        yearsInService: years == null ? null : int.tryParse(years),
+        bio: diff['bio'],
+        photo: _photo,
+      );
       if (!mounted) return;
       setState(() => _buttonState = AppButtonState.success);
       await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -157,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -192,8 +192,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           label: 'Profile photo',
                           helper: 'Tap to choose a new photo.',
                           value: _photo,
-                          onChanged: (PickedImage? v) =>
-                              setState(() => _photo = v),
+                          onChanged: (v) => setState(() => _photo = v),
                           aspectRatio: 1,
                           icon: Icons.person_outline_rounded,
                           enabled: !_busy,

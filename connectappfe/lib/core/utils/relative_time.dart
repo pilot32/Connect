@@ -4,8 +4,8 @@
 /// and a locale-loading step for what is currently a single use.
 String relativeTime(DateTime? time, {DateTime? now}) {
   if (time == null) return '';
-  final DateTime reference = now ?? DateTime.now();
-  final Duration diff = reference.difference(time.toLocal());
+  final reference = now ?? DateTime.now();
+  final diff = reference.difference(time.toLocal());
 
   if (diff.isNegative) return 'just now';
   if (diff.inSeconds < 60) return 'just now';

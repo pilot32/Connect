@@ -1,4 +1,4 @@
-import '../../../core/models/models.dart';
+import 'package:connectappfe/core/models/models.dart';
 
 /// An accepted connection, as returned by `GET /connections`.
 ///
@@ -11,10 +11,6 @@ class NetworkConnection {
     this.since,
   });
 
-  final String connectionId;
-  final PublicUser user;
-  final DateTime? since;
-
   factory NetworkConnection.fromJson(Map<String, dynamic> json) {
     return NetworkConnection(
       connectionId: json['connectionId'] as String? ?? '',
@@ -24,6 +20,10 @@ class NetworkConnection {
       since: DateTime.tryParse(json['since'] as String? ?? ''),
     );
   }
+
+  final String connectionId;
+  final PublicUser user;
+  final DateTime? since;
 }
 
 /// A pending request from `GET /connections/requests`, in either direction.
@@ -34,14 +34,6 @@ class ConnectionRequest {
     required this.incoming,
     this.createdAt,
   });
-
-  final String requestId;
-  final PublicUser user;
-
-  /// True when the current user is the *recipient* — i.e. this request is
-  /// actionable via accept/decline. Outgoing requests can only be cancelled.
-  final bool incoming;
-  final DateTime? createdAt;
 
   factory ConnectionRequest.fromJson(
     Map<String, dynamic> json, {
@@ -56,29 +48,31 @@ class ConnectionRequest {
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
     );
   }
+
+  final String requestId;
+  final PublicUser user;
+
+  /// True when the current user is the *recipient* — i.e. this request is
+  /// actionable via accept/decline. Outgoing requests can only be cancelled.
+  final bool incoming;
+  final DateTime? createdAt;
 }
 
 /// Both directions of `GET /connections/requests` in one object.
 class PendingRequests {
   const PendingRequests({required this.incoming, required this.outgoing});
 
-  const PendingRequests.empty()
-      : incoming = const <ConnectionRequest>[],
-        outgoing = const <ConnectionRequest>[];
-
-  final List<ConnectionRequest> incoming;
-  final List<ConnectionRequest> outgoing;
-
-  int get total => incoming.length + outgoing.length;
-
   factory PendingRequests.fromJson(Map<String, dynamic> json) {
     List<ConnectionRequest> parse(Object? raw, {required bool incoming}) {
       if (raw is! List) return <ConnectionRequest>[];
       return raw
           .whereType<Map<dynamic, dynamic>>()
-          .map((Map<dynamic, dynamic> e) =>
-              ConnectionRequest.fromJson(e.cast<String, dynamic>(),
-                  incoming: incoming))
+          .map(
+            (e) => ConnectionRequest.fromJson(
+              e.cast<String, dynamic>(),
+              incoming: incoming,
+            ),
+          )
           .toList();
     }
 
@@ -87,4 +81,13 @@ class PendingRequests {
       outgoing: parse(json['outgoing'], incoming: false),
     );
   }
+
+  const PendingRequests.empty()
+    : incoming = const <ConnectionRequest>[],
+      outgoing = const <ConnectionRequest>[];
+
+  final List<ConnectionRequest> incoming;
+  final List<ConnectionRequest> outgoing;
+
+  int get total => incoming.length + outgoing.length;
 }

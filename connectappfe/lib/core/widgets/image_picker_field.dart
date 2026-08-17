@@ -1,9 +1,8 @@
+import 'package:connectappfe/core/models/picked_image.dart';
+import 'package:connectappfe/core/theme/app_colors.dart';
+import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../models/picked_image.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_tokens.dart';
 
 /// Tappable image slot that previews the chosen file before upload.
 ///
@@ -11,11 +10,11 @@ import '../theme/app_tokens.dart';
 /// web, and so the preview and the multipart body share one source of truth.
 class ImagePickerField extends StatefulWidget {
   const ImagePickerField({
-    super.key,
     required this.label,
     required this.helper,
     required this.value,
     required this.onChanged,
+    super.key,
     this.required = false,
     this.aspectRatio = 16 / 10,
     this.icon = Icons.badge_outlined,
@@ -43,7 +42,7 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
     if (_picking) return;
     setState(() => _picking = true);
     try {
-      final XFile? file = await _picker.pickImage(
+      final file = await _picker.pickImage(
         source: source,
         // Downscale before upload: an ID card photo doesn't need 12MP, and the
         // backend caps uploads at 5MB.
@@ -51,7 +50,7 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
         imageQuality: 85,
       );
       if (file == null) return;
-      final PickedImage picked = PickedImage(
+      final picked = PickedImage(
         bytes: await file.readAsBytes(),
         filename: file.name,
       );
@@ -63,10 +62,10 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
   }
 
   Future<void> _showSourceSheet() async {
-    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+    final source = await showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
-      builder: (BuildContext context) {
+      builder: (context) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -92,10 +91,10 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme scheme = theme.colorScheme;
-    final PickedImage? value = widget.value;
-    final bool hasValue = value != null;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final value = widget.value;
+    final hasValue = value != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,10 +161,10 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
 
 class _Placeholder extends StatelessWidget {
   const _Placeholder({
-    super.key,
     required this.icon,
     required this.helper,
     required this.busy,
+    super.key,
   });
 
   final IconData icon;
@@ -174,7 +173,7 @@ class _Placeholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final theme = Theme.of(context);
     return Center(
       child: busy
           ? const CircularProgressIndicator(strokeWidth: 2.4)
@@ -184,8 +183,9 @@ class _Placeholder extends StatelessWidget {
                 Icon(icon, size: 30, color: theme.colorScheme.primary),
                 const SizedBox(height: AppSpacing.xs),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   child: Text(
                     helper,
                     textAlign: TextAlign.center,
@@ -200,8 +200,8 @@ class _Placeholder extends StatelessWidget {
 
 class _Preview extends StatelessWidget {
   const _Preview({
-    super.key,
     required this.image,
+    super.key,
     this.onReplace,
     this.onRemove,
   });

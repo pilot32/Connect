@@ -6,10 +6,12 @@
 class Validators {
   const Validators._();
 
-  static final RegExp _email = RegExp(r'^[\w.!#$%&’*+/=?^`{|}~-]+@[\w-]+(\.[\w-]+)+$');
+  static final RegExp _email = RegExp(
+    r'^[\w.!#$%&’*+/=?^`{|}~-]+@[\w-]+(\.[\w-]+)+$',
+  );
 
   static String? email(String? value) {
-    final String text = (value ?? '').trim();
+    final text = (value ?? '').trim();
     if (text.isEmpty) return 'Email is required';
     if (!_email.hasMatch(text)) return 'Enter a valid email address';
     return null;
@@ -18,7 +20,7 @@ class Validators {
   /// Backend requires 8+ characters and nothing else, so we don't invent
   /// stricter rules that would reject passwords the API would happily accept.
   static String? password(String? value) {
-    final String text = value ?? '';
+    final text = value ?? '';
     if (text.isEmpty) return 'Password is required';
     if (text.length < 8) return 'Use at least 8 characters';
     return null;
@@ -40,9 +42,9 @@ class Validators {
   }
 
   static String? yearsInService(String? value) {
-    final String text = (value ?? '').trim();
+    final text = (value ?? '').trim();
     if (text.isEmpty) return 'Years in service is required';
-    final int? years = int.tryParse(text);
+    final years = int.tryParse(text);
     if (years == null) return 'Enter a whole number';
     if (years < 0) return "Years in service can't be negative";
     if (years > 60) return 'That looks too high — check the value';
@@ -52,7 +54,9 @@ class Validators {
   /// Optional free text with an upper bound, used for the bio field.
   static String? Function(String?) maxLength(int limit) {
     return (String? value) {
-      if ((value ?? '').length > limit) return 'Keep it under $limit characters';
+      if ((value ?? '').length > limit) {
+        return 'Keep it under $limit characters';
+      }
       return null;
     };
   }

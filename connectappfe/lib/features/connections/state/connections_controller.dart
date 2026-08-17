@@ -1,7 +1,7 @@
-import '../../../core/services/api_exception.dart';
-import '../../../core/state/load_controller.dart';
-import '../models/connection_models.dart';
-import '../services/connections_service.dart';
+import 'package:connectappfe/core/services/api_exception.dart';
+import 'package:connectappfe/core/state/load_controller.dart';
+import 'package:connectappfe/features/connections/models/connection_models.dart';
+import 'package:connectappfe/features/connections/services/connections_service.dart';
 
 /// How the current user relates to another official.
 enum LinkStatus {
@@ -41,7 +41,7 @@ class ConnectionsController extends LoadController<ConnectionsData> {
   @override
   Future<ConnectionsData> fetch() async {
     // Parallel: the two calls are independent and this halves the wait.
-    final List<Object> results = await Future.wait(<Future<Object>>[
+    final results = await Future.wait(<Future<Object>>[
       _service.listConnections(),
       _service.listRequests(),
     ]);
@@ -52,19 +52,20 @@ class ConnectionsController extends LoadController<ConnectionsData> {
   }
 
   List<NetworkConnection> get network => data?.network ?? <NetworkConnection>[];
-  PendingRequests get requests => data?.requests ?? const PendingRequests.empty();
+  PendingRequests get requests =>
+      data?.requests ?? const PendingRequests.empty();
 
   LinkStatus statusFor(String userId) {
-    final ConnectionsData? current = data;
+    final current = data;
     if (current == null) return LinkStatus.none;
 
-    for (final NetworkConnection c in current.network) {
+    for (final c in current.network) {
       if (c.user.id == userId) return LinkStatus.connected;
     }
-    for (final ConnectionRequest r in current.requests.incoming) {
+    for (final r in current.requests.incoming) {
       if (r.user.id == userId) return LinkStatus.incoming;
     }
-    for (final ConnectionRequest r in current.requests.outgoing) {
+    for (final r in current.requests.outgoing) {
       if (r.user.id == userId) return LinkStatus.outgoing;
     }
     return LinkStatus.none;
@@ -73,16 +74,16 @@ class ConnectionsController extends LoadController<ConnectionsData> {
   /// The row id needed to act on this relationship: a connection id when
   /// connected, otherwise the pending request id.
   String? actionableIdFor(String userId) {
-    final ConnectionsData? current = data;
+    final current = data;
     if (current == null) return null;
 
-    for (final NetworkConnection c in current.network) {
+    for (final c in current.network) {
       if (c.user.id == userId) return c.connectionId;
     }
-    for (final ConnectionRequest r in current.requests.incoming) {
+    for (final r in current.requests.incoming) {
       if (r.user.id == userId) return r.requestId;
     }
-    for (final ConnectionRequest r in current.requests.outgoing) {
+    for (final r in current.requests.outgoing) {
       if (r.user.id == userId) return r.requestId;
     }
     return null;

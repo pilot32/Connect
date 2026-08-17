@@ -1,8 +1,7 @@
+import 'package:connectappfe/core/config/api_config.dart';
+import 'package:connectappfe/core/models/models.dart';
+import 'package:connectappfe/core/services/api_client.dart';
 import 'package:dio/dio.dart';
-
-import '../../../core/config/api_config.dart';
-import '../../../core/models/models.dart';
-import '../../../core/services/api_client.dart';
 
 /// `GET /profile/me`, `GET /profile/:id`, `PUT /profile/me`.
 class ProfileService {
@@ -17,14 +16,15 @@ class ProfileService {
 
   Future<PublicUser> getProfileById(String userId) async {
     final dynamic data = await _api.get(ApiConfig.profileById(userId));
-    final Map<String, dynamic> json = _asMap(data);
+    final json = _asMap(data);
     // The endpoint nests the id under `user`, so flatten it into the shape
     // PublicUser expects.
     return PublicUser(
       id: (json['user'] as Map?)?['id'] as String? ?? userId,
       profile: json['profile'] is Map
           ? UserProfile.fromJson(
-              (json['profile'] as Map).cast<String, dynamic>())
+              (json['profile'] as Map).cast<String, dynamic>(),
+            )
           : null,
     );
   }
@@ -41,7 +41,7 @@ class ProfileService {
     String? bio,
     PickedImage? photo,
   }) async {
-    final Map<String, dynamic> fields = <String, dynamic>{};
+    final fields = <String, dynamic>{};
     void put(String key, String? value) {
       if (value != null) fields[key] = value;
     }

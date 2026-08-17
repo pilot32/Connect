@@ -15,6 +15,19 @@ class UserProfile {
     this.bio,
   });
 
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      name: json['name'] as String? ?? '',
+      designation: json['designation'] as String? ?? '',
+      service: json['service'] as String? ?? '',
+      department: json['department'] as String? ?? '',
+      stateOrCadre: json['stateOrCadre'] as String? ?? '',
+      yearsInService: (json['yearsInService'] as num?)?.toInt() ?? 0,
+      photoUrl: json['photoUrl'] as String?,
+      bio: json['bio'] as String?,
+    );
+  }
+
   final String name;
   final String designation;
   final String service;
@@ -27,36 +40,23 @@ class UserProfile {
   /// First letters of the first two words, e.g. "Asha Menon" -> "AM".
   /// Avatar fallback when [photoUrl] is null.
   String get initials {
-    final List<String> parts = name
+    final parts = name
         .trim()
         .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
+        .where((part) => part.isNotEmpty)
         .toList();
     if (parts.isEmpty) return '?';
-    final String first = parts.first.substring(0, 1).toUpperCase();
+    final first = parts.first.substring(0, 1).toUpperCase();
     if (parts.length == 1) return first;
     return first + parts[1].substring(0, 1).toUpperCase();
   }
 
   /// "IAS · Revenue" — the one-line subtitle used in list rows.
   String get headline {
-    final List<String> parts = <String>[
+    final parts = <String>[
       if (service.isNotEmpty) service,
       if (department.isNotEmpty) department,
     ];
     return parts.join(' · ');
-  }
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      name: json['name'] as String? ?? '',
-      designation: json['designation'] as String? ?? '',
-      service: json['service'] as String? ?? '',
-      department: json['department'] as String? ?? '',
-      stateOrCadre: json['stateOrCadre'] as String? ?? '',
-      yearsInService: (json['yearsInService'] as num?)?.toInt() ?? 0,
-      photoUrl: json['photoUrl'] as String?,
-      bio: json['bio'] as String?,
-    );
   }
 }
