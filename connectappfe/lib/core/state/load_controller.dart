@@ -115,6 +115,23 @@ abstract class LoadController<T> extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Drops the payload and shows the loading state again.
+  ///
+  /// For when the *question* changed, not just the answer — switching the
+  /// admin queue from "Pending" to "Approved", say. A plain `load()` keeps the
+  /// old data on screen until the new response lands, which would leave
+  /// approved applicants sitting under a "Pending" heading; a `silent` load
+  /// does the same more quietly. Neither is right when the previous result set
+  /// is no longer an answer to what is being asked.
+  @protected
+  void clearData() {
+    _data = null;
+    _error = null;
+    _silentError = null;
+    _status = LoadStatus.loading;
+    notifyListeners();
+  }
+
   @protected
   void setError(String message) {
     _error = message;

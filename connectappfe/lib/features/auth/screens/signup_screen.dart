@@ -1,4 +1,3 @@
-import 'package:connectappfe/core/router/app_routes.dart';
 import 'package:connectappfe/core/services/api_exception.dart';
 import 'package:connectappfe/core/theme/app_tokens.dart';
 import 'package:connectappfe/core/utils/validators.dart';
@@ -149,12 +148,16 @@ class _SignupScreenState extends State<SignupScreen> {
       ..profilePhoto = _profilePhoto;
 
     try {
-      await context.read<AuthController>().signup(draft);
+      final auth = context.read<AuthController>();
+      await auth.signup(draft);
       if (!mounted) return;
       setState(() => _buttonState = AppButtonState.success);
       await Future<void>.delayed(const Duration(milliseconds: 650));
       if (!mounted) return;
-      context.go(AppRoutes.afterLogin);
+      // In practice always the waiting room: signup creates the account
+      // `pending`. Routed through `landingRoute` anyway so this screen never
+      // has to encode that assumption.
+      context.go(auth.landingRoute);
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _buttonState = AppButtonState.idle);

@@ -50,16 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await context.read<AuthController>().login(
-        email: _email.text,
-        password: _password.text,
-      );
+      final auth = context.read<AuthController>();
+      await auth.login(email: _email.text, password: _password.text);
       if (!mounted) return;
       setState(() => _buttonState = AppButtonState.success);
       // Let the checkmark land before handing over to the next screen.
       await Future<void>.delayed(const Duration(milliseconds: 550));
       if (!mounted) return;
-      context.go(AppRoutes.afterLogin);
+      // Admins go to the console and unapproved users to the waiting room —
+      // the router would bounce them there anyway, but going straight to the
+      // right place keeps the destination in one place.
+      context.go(auth.landingRoute);
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {

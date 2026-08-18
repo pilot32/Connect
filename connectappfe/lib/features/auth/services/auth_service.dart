@@ -26,6 +26,15 @@ class AuthService {
     return AuthSession.fromJson(_asMap(data));
   }
 
+  /// `GET /auth/status` — the account's live role/status/profile.
+  ///
+  /// Returns an [AuthSession] with an empty token: the endpoint doesn't mint
+  /// one, and the caller is already holding a valid token to have reached it.
+  Future<AuthSession> checkStatus() async {
+    final dynamic data = await _api.get(ApiConfig.authStatus);
+    return AuthSession.fromJson(_asMap(data));
+  }
+
   Future<AuthSession> signup(SignupDraft draft) async {
     final fields = <String, dynamic>{
       'email': draft.email.trim(),

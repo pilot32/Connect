@@ -24,6 +24,18 @@ class AppRoutes {
   static const String userProfilePattern = '/user/:id';
   static String userProfile(String userId) => '/user/$userId';
 
-  /// Where a freshly authenticated user lands.
+  // Full-screen, outside the tab shell — each is the *only* screen its
+  // audience may see, so neither gets bottom navigation.
+
+  /// The approval console. Admins are pinned here; nobody else may enter.
+  static const String admin = '/admin';
+
+  /// Waiting room for accounts an admin hasn't cleared yet. Pending and
+  /// rejected users are held here until their status changes.
+  static const String pendingApproval = '/pending-approval';
+
+  /// Where a freshly authenticated *approved* user lands. Admins and
+  /// unapproved users go elsewhere — ask `AuthController.landingRoute` rather
+  /// than using this directly.
   static const String afterLogin = feed;
 }
