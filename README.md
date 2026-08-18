@@ -70,7 +70,7 @@ Serving government officials (IAS, IPS, IFS, and other central/state civil servi
 ## Explicitly Out of Scope for MVP
 
 - Aadhaar / DigiLocker government ID verification (deferred — requires API access + compliance review)
-- Manual admin approval/review workflow for the ID card photo (photo upload itself is implemented at signup)
+- ~~Manual admin approval/review workflow for the ID card photo~~ — now implemented: signup lands in `pending`, an admin approves/rejects via `/admin/users`, and app features stay locked until approved. A dedicated admin *UI* is still out of scope
 - Gov-email OTP/magic-link access gate
 - "Verified" / "Pending" badge or status shown on profiles
 - Direct messaging

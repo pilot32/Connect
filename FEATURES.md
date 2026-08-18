@@ -9,8 +9,9 @@ Post-MVP feature ideas, organized by phase. Current MVP scope lives in [README.m
 Things that were explicitly deferred from MVP and are the most likely next additions.
 
 ### Backend
-- Manual admin review/approval workflow for the ID card photo captured at signup + admin panel (replacing bare-bones DB access)
-- "Verified" / "Pending" status field on profiles, surfaced via API
+- ~~Manual admin review/approval workflow for the ID card photo captured at signup~~ — **done**: `/admin/users` list + approve/reject, `requireApproved` gate, `GET /auth/status`. See [API_CONTRACT.md](API_CONTRACT.md#admin). Still open from this item: an admin *panel* (reviewers currently drive the API directly), and admin creation beyond `prisma/seed.js`
+- Audit history of review decisions — `User.reviewed_at`/`reviewed_by_id` keep only the latest decision, not a log
+- "Verified" / "Pending" status field on **profiles**, surfaced via API — `User.status` gates access but is never exposed on another user's public profile
 - Real OTP provider integration (Twilio or MSG91) replacing hardcoded/mock OTP
 - Rate limiting on OTP request endpoints (abuse prevention)
 - Pagination on directory search and feed endpoints
