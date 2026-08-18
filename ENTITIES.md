@@ -6,16 +6,27 @@ Current data model for the MVP. `User`, `Profile`, `Connection`, and `Post` belo
 
 ## User
 
-Core identity + auth record. Email + password auth, plus an ID card photo captured at signup for future verification review (implemented) — no email verification, OTP, gov-email gate, or admin review of the ID card in this pass; see [FEATURES.md](FEATURES.md) for those as deferred items.
+Core identity + auth record, plus the admin-approval state machine. Email + password auth and an ID card photo captured at signup, which an admin now reviews via `/admin/*` (implemented). No email verification, OTP, or gov-email gate; see [FEATURES.md](FEATURES.md) for those as deferred items.
 
 | Field | Type | Notes |
 |---|---|---|
 | id | UUID | Primary key |
 | email | string | Unique, used for signup/login |
 | password_hash | string | bcrypt hash, never returned by the API |
-| id_card_photo_url | string | Cloudinary URL, uploaded server-side at signup. Required. Private — never returned in API responses; nothing reviews it yet |
+| id_card_photo_url | string | Cloudinary URL, uploaded server-side at signup. **Nullable** — only because seeded admin accounts have no ID card; signup still rejects a request without one. Returned **only** on `/admin/*` responses |
+| role | enum (`user_role`) | `user` / `admin`, default `user`. Admins are seeded (`prisma/seed.js`), never created through signup |
+| status | enum (`user_status`) | `pending` / `approved` / `rejected`, default `pending`. Gates every app feature |
+| rejection_reason | string | Nullable — optional admin note, ≤500 chars. Cleared on approve |
+| reviewed_at | timestamp | Nullable — stamped on each approve/reject |
+| reviewed_by_id | UUID | Nullable — the reviewing admin's id. Deliberately **not** a FK: deleting an admin must neither cascade into nor block the applicants they reviewed |
 | created_at | timestamp | |
 | updated_at | timestamp | |
+
+Notes:
+- `status` is read from this row on every gated request, never from the JWT — a 7-day token stamped `pending` at signup would otherwise keep an approved user locked out until re-login.
+- Seeded admins are created `status = approved`, so an admin never has to approve itself.
+- The `(role, status)` index backs the `GET /admin/users?status=…` review queue.
+- Pre-existing users are grandfathered to `approved` by `prisma/sql/005_add_admin_approval.sql`, so the change doesn't lock out accounts created before approval existed.
 
 ---
 
@@ -97,8 +108,9 @@ User 1---N Connection (as recipient)
 These were considered but are out of scope per the current MVP (see [FEATURES.md](FEATURES.md)):
 
 - Gov-email OTP/magic-link verification fields on `User` (`gov_email`, `is_gov_email_verified`) — cut from this pass along with the badge, may return as a later access-gate design
-- Manual admin approval / review workflow for `id_card_photo_url` (the photo is captured and stored at signup, but nothing reviews it or sets a verified status yet) (Phase 2)
-- `AdminAction` / audit log (Phase 4)
+- A verified badge on public profiles — `status` gates access, but nothing surfaces it on `GET /profile/:id` or in the directory
+- `AdminAction` / audit log (Phase 4) — `User.reviewed_at` / `reviewed_by_id` record only the *latest* decision, not a history
+- Self-service admin creation/promotion — admins exist only via the seed script
 - `PostReaction` / `Comment` (Phase 3)
 - `Message` / `Conversation` for direct messaging (Phase 3)
 

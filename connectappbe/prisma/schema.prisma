@@ -8,14 +8,44 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum UserRole {
+  user
+  admin
+
+  @@map("user_role")
+}
+
+enum UserStatus {
+  pending
+  approved
+  rejected
+
+  @@map("user_status")
+}
+
 model User {
-  id             String   @id @default(uuid()) @db.Uuid
-  email          String   @unique
-  passwordHash   String   @map("password_hash")
-  idCardPhotoUrl String   @map("id_card_photo_url")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  profile        Profile?
+  id           String @id @default(uuid()) @db.Uuid
+  email        String @unique
+  passwordHash String @map("password_hash")
+
+  // Optional because admin accounts are seeded, not signed up — they never
+  // upload an ID card. Officials signing up still must send one (enforced in
+  // the signup controller, not the schema).
+  idCardPhotoUrl String? @map("id_card_photo_url")
+
+  role   UserRole   @default(user)
+  status UserStatus @default(pending)
+
+  // Review audit trail. reviewedById is a plain column, not a relation: an
+  // admin account being deleted must not cascade into or block the applicants
+  // they reviewed.
+  rejectionReason String?   @map("rejection_reason")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewedById    String?   @map("reviewed_by_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  profile   Profile?
 
   connectionsSent     Connection[] @relation("ConnectionRequester")
   connectionsReceived Connection[] @relation("ConnectionRecipient")

@@ -2,9 +2,51 @@
 
 Base URL (local dev): `http://localhost:3000`
 
-Covers the currently implemented endpoints: auth, profile, connections, directory, feed. Verification's review workflow is not implemented — see [AGENTS.md](AGENTS.md).
+Covers the currently implemented endpoints: auth, admin, profile, connections, directory, feed.
 
 All endpoints below except `POST /auth/signup` and `POST /auth/login` require `Authorization: Bearer <token>` (see Notes at the bottom of the Auth section).
+
+## Account approval — read this first
+
+Every signup lands in `status: "pending"` and stays locked out of the app until an admin approves it. Two gates enforce this:
+
+| Gate | Applies to | On failure |
+|---|---|---|
+| `requireAuth` | everything except signup/login | `401` |
+| `requireApproved` | `/profile`, `/connections`, `/directory`, `/feed` | `403` with `code` `ACCOUNT_PENDING` or `ACCOUNT_REJECTED` |
+
+`POST /auth/signup`, `POST /auth/login` and `GET /auth/status` are **not** gated by `requireApproved` — a pending user must still be able to sign in and watch for a decision. `/admin/*` is gated by `requireAdmin` instead.
+
+**The gate reads the database, not the token.** A token issued at signup carries `"status": "pending"` for its full 7-day life. If the gate trusted that claim, an approved user would stay locked out until they logged in again. It re-reads the user row on every request instead, so approval takes effect on the user's very next call with the token they already hold. The `role`/`status` claims inside the JWT are a convenience snapshot for client-side routing only — never a source of truth.
+
+Admin accounts bypass `requireApproved` entirely (they are reviewers, not applicants).
+
+**`403` account-gate response shapes**
+
+```json
+{ "error": "Your account is awaiting admin approval", "code": "ACCOUNT_PENDING" }
+```
+```json
+{
+  "error": "Your account was not approved",
+  "code": "ACCOUNT_REJECTED",
+  "rejectionReason": "ID card photo is unreadable"
+}
+```
+`rejectionReason` is `null` when the admin rejected without giving one.
+
+**The `user` object** returned by signup, login, and `GET /auth/status` is the same shape everywhere:
+
+| Field | Type | Notes |
+|---|---|---|
+| id | string (uuid) | |
+| email | string | only ever returned for the requester's own account |
+| role | `"user"` \| `"admin"` | |
+| status | `"pending"` \| `"approved"` \| `"rejected"` | |
+| rejectionReason | string \| null | non-null only while `status` is `"rejected"`, and only if the admin supplied one |
+| createdAt | string (ISO 8601) | |
+
+`idCardPhotoUrl` is never in this object — it is returned **only** on `/admin/*` responses.
 
 ---
 
@@ -15,6 +57,8 @@ All endpoints below except `POST /auth/signup` and `POST /auth/login` require `A
 ## POST /auth/signup
 
 Creates a new user with email + password, full profile details, and an ID card photo for verification. Profile photo, ID card photo, and Cloudinary upload happen server-side as part of this request.
+
+The account is created with `role: "user"` and `status: "pending"` — the returned token is valid, but every app feature returns `403 ACCOUNT_PENDING` until an admin approves it.
 
 **Headers**
 ```
@@ -54,13 +98,17 @@ curl -X POST http://localhost:3000/auth/signup \
 
 **Responses**
 
-`201 Created` — account + profile created
+`201 Created` — account + profile created, awaiting review
 ```json
 {
   "token": "<jwt>",
   "user": {
-    "id": "9a48b702-203c-47a6-9092-076ce1f7954b",
-    "email": "officer@example.com"
+    "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+    "email": "officer@example.com",
+    "role": "user",
+    "status": "pending",
+    "rejectionReason": null,
+    "createdAt": "2026-08-17T14:04:00.845Z"
   },
   "profile": {
     "name": "Test Officer",
@@ -113,7 +161,9 @@ Note: `photoUrl` is `null` if `profilePhoto` wasn't sent. The ID card photo URL 
 
 ## POST /auth/login
 
-Authenticates an existing user with email + password.
+Authenticates an existing user with email + password. Works for admin accounts too — the same endpoint, distinguished by `user.role` in the response.
+
+Pending and rejected accounts **can** log in: they need a token to poll `GET /auth/status`. Login is not where the approval gate lives.
 
 **Headers**
 ```
@@ -140,9 +190,38 @@ Content-Type: application/json
 {
   "token": "<jwt>",
   "user": {
-    "id": "9a48b702-203c-47a6-9092-076ce1f7954b",
-    "email": "officer@example.com"
+    "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+    "email": "officer@example.com",
+    "role": "user",
+    "status": "approved",
+    "rejectionReason": null,
+    "createdAt": "2026-08-17T14:04:00.845Z"
+  },
+  "profile": {
+    "name": "Test Officer",
+    "photoUrl": null,
+    "designation": "District Magistrate",
+    "service": "IAS",
+    "department": "Revenue",
+    "stateOrCadre": "Karnataka",
+    "yearsInService": 5,
+    "bio": "Optional short bio"
   }
+}
+```
+`profile` is `null` for admin accounts, which have no profile row:
+```json
+{
+  "token": "<jwt>",
+  "user": {
+    "id": "c6804a74-97a3-4989-ba22-97eed48b7c69",
+    "email": "admin@govconnect.in",
+    "role": "admin",
+    "status": "approved",
+    "rejectionReason": null,
+    "createdAt": "2026-08-17T14:02:31.646Z"
+  },
+  "profile": null
 }
 ```
 
@@ -180,19 +259,311 @@ Content-Type: application/json
 
 ---
 
+## GET /auth/status
+
+The authenticated user's **current** account state, read fresh from the database. This is how the app learns it has been approved without forcing a logout/login: the token's `status` claim is frozen at sign-in, this endpoint is not.
+
+Requires `Authorization: Bearer <token>`. Deliberately **not** gated by `requireApproved` — a pending user is exactly who needs to call it. Poll it on app resume and from the "awaiting approval" screen.
+
+**Request body** — none.
+
+**Responses**
+
+`200 OK` — still waiting
+```json
+{
+  "user": {
+    "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+    "email": "officer@example.com",
+    "role": "user",
+    "status": "pending",
+    "rejectionReason": null,
+    "createdAt": "2026-08-17T14:04:00.845Z"
+  },
+  "profile": {
+    "name": "Approval Test Officer",
+    "photoUrl": null,
+    "designation": "District Magistrate",
+    "service": "IAS",
+    "department": "Revenue",
+    "stateOrCadre": "Karnataka",
+    "yearsInService": 5,
+    "bio": "Signed up for the approval test"
+  }
+}
+```
+
+`200 OK` — rejected, with the admin's reason for display
+```json
+{
+  "user": {
+    "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+    "email": "officer@example.com",
+    "role": "user",
+    "status": "rejected",
+    "rejectionReason": "ID card photo is unreadable",
+    "createdAt": "2026-08-17T14:04:00.845Z"
+  },
+  "profile": { "...": "same shape as above" }
+}
+```
+
+`200 OK` — approved; the client can now move into the app on the token it already has.
+
+`401 Unauthorized` — missing/invalid token, or the account no longer exists
+```json
+{ "error": "Missing token" }
+```
+```json
+{ "error": "Invalid or expired token" }
+```
+
+`profile` is `null` for admin accounts.
+
+---
+
 ## Notes
 
-- `token` is a JWT signed with `JWT_SECRET`, payload `{ sub: <user id>, email }`, expires in 7 days. Send it as `Authorization: Bearer <token>` on endpoints that require `requireAuth` (none yet — auth is the first implemented feature).
+- `token` is a JWT signed with `JWT_SECRET`, payload `{ sub: <user id>, email, role, status }`, expires in 7 days. Send it as `Authorization: Bearer <token>` on every endpoint outside signup/login.
+- **`role` and `status` in the token are a sign-in-time snapshot, for client-side routing only.** The server re-reads both from the database on every gated request, so a stale claim can never widen access — and an approval never requires a re-login. Use `GET /auth/status` for the authoritative value.
 - `password_hash` is never returned in any response.
-- No email verification, OTP, or gov-email gate on signup/login in this pass — see [FEATURES.md](FEATURES.md) for that as a deferred item.
-- Login (`POST /auth/login`) is unaffected by the profile/ID-card changes — still plain `application/json` with just `email`/`password`.
-- The ID card photo is only *captured and stored* at signup — nothing in this pass reviews it, sets a verified status, or shows a badge (that's still deferred, see [FEATURES.md](FEATURES.md)).
+- No email verification, OTP, or gov-email gate on signup/login — see [FEATURES.md](FEATURES.md).
+- Login (`POST /auth/login`) is still plain `application/json` with just `email`/`password`; it now returns `profile` alongside `user`.
+- The ID card photo captured at signup is reviewed by an admin via `/admin/*` (below). There is still no verified badge on public profiles.
+
+---
+
+# Admin
+
+The approval console. Every endpoint below requires `Authorization: Bearer <token>` for an account with `role: "admin"` — `requireAuth` then `requireAdmin`, which re-reads the role from the database rather than trusting the token's claim.
+
+Admin accounts are **seeded, not signed up** (`node prisma/seed.js`, credentials from `ADMIN_EMAIL` / `ADMIN_PASSWORD`). There is no endpoint that creates or promotes an admin. They log in through the normal `POST /auth/login`.
+
+**Shared errors on every `/admin/*` endpoint**
+
+`401 Unauthorized` — missing/invalid token, or the account no longer exists
+```json
+{ "error": "Missing token" }
+```
+
+`403 Forbidden` — a valid token for a non-admin account
+```json
+{ "error": "Admin access required", "code": "ADMIN_ONLY" }
+```
+
+## The applicant object
+
+Returned by all four endpoints below. This is the **only** place `idCardPhotoUrl` is ever exposed — it's a private verification asset, and reviewing it is the point of this screen.
+
+| Field | Type | Notes |
+|---|---|---|
+| id | string (uuid) | |
+| email | string | |
+| role | `"user"` | always — admins are never applicants |
+| status | `"pending"` \| `"approved"` \| `"rejected"` | |
+| idCardPhotoUrl | string \| null | Cloudinary URL of the ID card uploaded at signup |
+| rejectionReason | string \| null | |
+| reviewedAt | string (ISO 8601) \| null | `null` until first reviewed; overwritten on every approve/reject |
+| reviewedById | string (uuid) \| null | the admin who last reviewed them |
+| createdAt | string (ISO 8601) | when they applied |
+| updatedAt | string (ISO 8601) | |
+| profile | object \| null | same shape as everywhere else in this document |
+
+```json
+{
+  "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+  "email": "officer@example.com",
+  "role": "user",
+  "status": "pending",
+  "idCardPhotoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/id-cards/qaihfbaky97vp6f7uxc2.png",
+  "rejectionReason": null,
+  "reviewedAt": null,
+  "reviewedById": null,
+  "createdAt": "2026-08-17T14:04:00.845Z",
+  "updatedAt": "2026-08-17T14:04:00.845Z",
+  "profile": {
+    "name": "Approval Test Officer",
+    "photoUrl": null,
+    "designation": "District Magistrate",
+    "service": "IAS",
+    "department": "Revenue",
+    "stateOrCadre": "Karnataka",
+    "yearsInService": 5,
+    "bio": "Signed up for the approval test"
+  }
+}
+```
+
+## GET /admin/users
+
+The review queue.
+
+**Query params**
+| Param | Type | Default | Notes |
+|---|---|---|---|
+| status | `pending` \| `approved` \| `rejected` \| `all` | `pending` | anything else is a `400`, not a silent fallback |
+
+Admin accounts are excluded from every filter, including `all` — the list is applicants only.
+
+Example: `GET /admin/users?status=pending`
+
+**Responses**
+
+`200 OK` — a bare array of applicant objects, **oldest first** (`createdAt` ascending: the review queue is worked front to back). Empty array when nothing matches — an empty queue is not a `404`.
+```json
+[
+  {
+    "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+    "email": "officer@example.com",
+    "role": "user",
+    "status": "pending",
+    "idCardPhotoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/id-cards/qaihfbaky97vp6f7uxc2.png",
+    "rejectionReason": null,
+    "reviewedAt": null,
+    "reviewedById": null,
+    "createdAt": "2026-08-17T14:04:00.845Z",
+    "updatedAt": "2026-08-17T14:04:00.845Z",
+    "profile": { "...": "..." }
+  }
+]
+```
+
+`400 Bad Request` — unrecognised `status`
+```json
+{
+  "error": "Invalid status filter — expected pending, approved, rejected or all",
+  "details": [
+    {
+      "received": "bogus",
+      "code": "invalid_enum_value",
+      "options": ["pending", "approved", "rejected", "all"],
+      "path": ["status"],
+      "message": "Invalid enum value. Expected 'pending' | 'approved' | 'rejected' | 'all', received 'bogus'"
+    }
+  ]
+}
+```
+
+No pagination yet.
+
+## GET /admin/users/:id
+
+One applicant, for the detail/review screen.
+
+**Responses**
+
+`200 OK` — a single applicant object (shape above).
+
+`400 Bad Request` — `:id` isn't a valid UUID
+```json
+{ "error": "Invalid user id" }
+```
+
+`404 Not Found` — no such applicant. Passing an **admin's** id also returns `404`: an admin account isn't an applicant, so there is nothing here to show.
+```json
+{ "error": "User not found" }
+```
+
+## POST /admin/users/:id/approve
+
+Approve an applicant. Takes effect immediately — on the user's *existing* token, no re-login needed.
+
+**Request body** — none.
+
+Sets `status = "approved"`, clears `rejectionReason` to `null`, and stamps `reviewedAt` / `reviewedById`. **Idempotent**, and doubles as the reconsider-a-rejection path: approving an already-approved or previously-rejected user succeeds and re-stamps the review fields.
+
+Example (curl):
+```
+curl -X POST http://localhost:3000/admin/users/6c9bdf39-ea7c-4c93-97f1-69296a42e5ef/approve \
+  -H "Authorization: Bearer <admin token>"
+```
+
+**Responses**
+
+`200 OK` — the updated applicant object
+```json
+{
+  "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+  "email": "officer@example.com",
+  "role": "user",
+  "status": "approved",
+  "idCardPhotoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/id-cards/qaihfbaky97vp6f7uxc2.png",
+  "rejectionReason": null,
+  "reviewedAt": "2026-08-17T14:04:18.879Z",
+  "reviewedById": "c6804a74-97a3-4989-ba22-97eed48b7c69",
+  "createdAt": "2026-08-17T14:04:00.845Z",
+  "updatedAt": "2026-08-17T14:04:19.006Z",
+  "profile": { "...": "..." }
+}
+```
+
+`400 Bad Request` / `404 Not Found` — same as `GET /admin/users/:id`.
+
+## POST /admin/users/:id/reject
+
+Reject an applicant, optionally with a reason shown to them.
+
+**Headers**
+```
+Content-Type: application/json
+```
+
+**Request body** — optional; the endpoint accepts an empty body, `{}`, or no `Content-Type` at all.
+| Field | Type | Rules |
+|---|---|---|
+| reason | string | optional — trimmed, 1-500 chars if sent. Omitted → `rejectionReason` is `null` |
+
+```json
+{ "reason": "ID card photo is unreadable" }
+```
+
+Sets `status = "rejected"`, stores `reason` (or `null`), and stamps `reviewedAt` / `reviewedById`. Idempotent.
+
+Example (curl):
+```
+curl -X POST http://localhost:3000/admin/users/6c9bdf39-ea7c-4c93-97f1-69296a42e5ef/reject \
+  -H "Authorization: Bearer <admin token>" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"ID card photo is unreadable"}'
+```
+
+**Responses**
+
+`200 OK` — the updated applicant object
+```json
+{
+  "id": "6c9bdf39-ea7c-4c93-97f1-69296a42e5ef",
+  "email": "officer@example.com",
+  "role": "user",
+  "status": "rejected",
+  "idCardPhotoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/id-cards/qaihfbaky97vp6f7uxc2.png",
+  "rejectionReason": "ID card photo is unreadable",
+  "reviewedAt": "2026-08-17T14:04:14.003Z",
+  "reviewedById": "c6804a74-97a3-4989-ba22-97eed48b7c69",
+  "createdAt": "2026-08-17T14:04:00.845Z",
+  "updatedAt": "2026-08-17T14:04:14.131Z",
+  "profile": { "...": "..." }
+}
+```
+The rejected user's next call to a gated endpoint returns `403 ACCOUNT_REJECTED` carrying this `rejectionReason`.
+
+`400 Bad Request` — invalid `:id` (`{ "error": "Invalid user id" }`), or a `reason` that is empty after trimming / over 500 chars
+```json
+{
+  "error": "Invalid rejection reason",
+  "details": [
+    { "code": "too_big", "maximum": 500, "type": "string", "inclusive": true, "exact": false, "message": "String must contain at most 500 character(s)", "path": ["reason"] }
+  ]
+}
+```
+
+`404 Not Found` — `{ "error": "User not found" }`
 
 ---
 
 # Profile
 
-All endpoints below require `Authorization: Bearer <token>`.
+All endpoints below require `Authorization: Bearer <token>` **and** an approved account — an unapproved caller gets `403 ACCOUNT_PENDING` / `ACCOUNT_REJECTED` before the handler runs.
 
 ## GET /profile/me
 
@@ -200,10 +571,17 @@ The authenticated user's own profile.
 
 **Responses**
 
-`200 OK`
+`200 OK` — `user` is the same object described under [Account approval](#account-approval--read-this-first)
 ```json
 {
-  "user": { "id": "074c04eb-1e8c-4e63-97a6-fc2cc4f31683", "email": "officerA@example.com" },
+  "user": {
+    "id": "074c04eb-1e8c-4e63-97a6-fc2cc4f31683",
+    "email": "officerA@example.com",
+    "role": "user",
+    "status": "approved",
+    "rejectionReason": null,
+    "createdAt": "2026-08-17T14:04:00.845Z"
+  },
   "profile": {
     "name": "Officer A",
     "photoUrl": null,
@@ -255,7 +633,14 @@ At least one field or `photo` must be sent — an entirely empty request is reje
 `200 OK` — same shape as `GET /profile/me`
 ```json
 {
-  "user": { "id": "93496c45-6fc8-47e4-894c-f45800879aed", "email": "putX@example.com" },
+  "user": {
+    "id": "93496c45-6fc8-47e4-894c-f45800879aed",
+    "email": "putX@example.com",
+    "role": "user",
+    "status": "approved",
+    "rejectionReason": null,
+    "createdAt": "2026-08-17T14:04:00.845Z"
+  },
   "profile": {
     "name": "Put X",
     "photoUrl": "https://res.cloudinary.com/<cloud>/image/upload/v.../govconnect/profile-photos/xyz.png",
@@ -318,7 +703,7 @@ Neither endpoint ever returns `idCardPhotoUrl` — private verification asset.
 
 # Connections
 
-All endpoints below require `Authorization: Bearer <token>`.
+All endpoints below require `Authorization: Bearer <token>` **and** an approved account (`403 ACCOUNT_PENDING` / `ACCOUNT_REJECTED` otherwise).
 
 ## POST /connections/request/:userId
 
@@ -470,7 +855,9 @@ Remove a connection. Semantics depend on its current status:
 
 ## GET /directory
 
-Browse/search officials. Requires `Authorization: Bearer <token>`.
+Browse/search officials. Requires `Authorization: Bearer <token>` **and** an approved account (`403 ACCOUNT_PENDING` / `ACCOUNT_REJECTED` otherwise).
+
+**Only approved officials are listed.** Pending and rejected applicants are filtered out — being browsable is part of what approval grants, so an unreviewed account must not appear here.
 
 **Query params** (all optional, combinable — AND logic; each does a case-insensitive partial match)
 | Param | Matches against |
@@ -514,7 +901,7 @@ Same public-profile shape as `GET /connections`'s `user` field — no email, no 
 
 # Feed
 
-All endpoints below require `Authorization: Bearer <token>`.
+All endpoints below require `Authorization: Bearer <token>` **and** an approved account (`403 ACCOUNT_PENDING` / `ACCOUNT_REJECTED` otherwise).
 
 ## POST /feed
 
