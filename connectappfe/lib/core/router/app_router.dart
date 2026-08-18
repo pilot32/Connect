@@ -1,6 +1,8 @@
 import 'package:connectappfe/core/router/app_routes.dart';
 import 'package:connectappfe/core/theme/app_tokens.dart';
+import 'package:connectappfe/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:connectappfe/features/auth/screens/login_screen.dart';
+import 'package:connectappfe/features/auth/screens/pending_approval_screen.dart';
 import 'package:connectappfe/features/auth/screens/signup_screen.dart';
 import 'package:connectappfe/features/auth/state/auth_controller.dart';
 import 'package:connectappfe/features/connections/screens/connections_screen.dart';
@@ -17,40 +19,96 @@ import 'package:go_router/go_router.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// The whole guard table, as a pure function: given where the user is and who
+/// they are, where should they actually be? Null means "stay put".
+///
+/// Split out of [buildRouter] so it can be tested directly. This decides who
+/// can reach the app at all, and every branch of it — an admin deep-linking
+/// into `/feed`, an approved user still sitting on `/pending-approval` — is a
+/// case that either strands someone on the wrong screen or lets them past the
+/// gate. Exercising that through a live `GoRouter` and a real `AuthController`
+/// (which needs secure storage, Dio and a reachable backend just to reach an
+/// authenticated state) would test the plumbing far more than the table.
+String? resolveRedirect({
+  required String location,
+  required AuthStatus status,
+  required bool isAdmin,
+  required bool isAwaitingApproval,
+}) {
+  // Still restoring the session: hold on the splash.
+  if (status == AuthStatus.unknown) {
+    return location == AppRoutes.splash ? null : AppRoutes.splash;
+  }
+
+  if (location == AppRoutes.splash) {
+    if (status != AuthStatus.authenticated) return AppRoutes.login;
+    if (isAdmin) return AppRoutes.admin;
+    return isAwaitingApproval
+        ? AppRoutes.pendingApproval
+        : AppRoutes.afterLogin;
+  }
+
+  // The auth screens stay reachable either way — see the note on [buildRouter]
+  // about letting them finish their own success animation.
+  const public = <String>{AppRoutes.login, AppRoutes.signup};
+  if (public.contains(location)) return null;
+
+  if (status != AuthStatus.authenticated) return AppRoutes.login;
+
+  // An admin has no profile, feed or network to visit, so everything outside
+  // the console is a wrong turn rather than a place to allow.
+  if (isAdmin) {
+    return location == AppRoutes.admin ? null : AppRoutes.admin;
+  }
+
+  // Non-admins never get the console, whatever their approval state.
+  if (location == AppRoutes.admin) {
+    return isAwaitingApproval ? AppRoutes.pendingApproval : AppRoutes.afterLogin;
+  }
+
+  if (isAwaitingApproval) {
+    return location == AppRoutes.pendingApproval
+        ? null
+        : AppRoutes.pendingApproval;
+  }
+
+  // Approved: the waiting room is no longer theirs. Reached the moment a status
+  // refresh flips them over, which is what pushes them into the app without a
+  // re-login.
+  if (location == AppRoutes.pendingApproval) return AppRoutes.afterLogin;
+
+  return null;
+}
+
 /// Builds the app's [GoRouter].
 ///
 /// The redirect only *guards* protected routes — it deliberately does not kick
 /// an authenticated user off `/login`. That lets the login and signup screens
 /// play their success animation and navigate themselves, instead of being
 /// yanked away the instant the token lands.
+///
+/// Beyond the session check it enforces the approval gate. Three audiences,
+/// three homes, and each is confined to its own: an admin only ever sees
+/// `/admin`, an unapproved user only `/pending-approval`, and an approved user
+/// gets the app but neither of the other two screens. Because `auth` is the
+/// `refreshListenable`, an admin's decision landing in `AuthController` re-runs
+/// this and moves the user across on its own — the waiting screen doesn't have
+/// to navigate anywhere itself.
+///
+/// This mirrors the backend's `requireApproved`/`requireAdmin`; it is not a
+/// substitute for them. Client-side routing is a UX affordance, and the server
+/// gates the data regardless of what this lets a screen render.
 GoRouter buildRouter(AuthController auth) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     refreshListenable: auth,
-    redirect: (context, state) {
-      final location = state.matchedLocation;
-      final status = auth.status;
-
-      // Still restoring the session: hold on the splash.
-      if (status == AuthStatus.unknown) {
-        return location == AppRoutes.splash ? null : AppRoutes.splash;
-      }
-
-      if (location == AppRoutes.splash) {
-        return status == AuthStatus.authenticated
-            ? AppRoutes.afterLogin
-            : AppRoutes.login;
-      }
-
-      // Everything except the auth screens requires a session.
-      const public = <String>{AppRoutes.login, AppRoutes.signup};
-      if (!public.contains(location) && status != AuthStatus.authenticated) {
-        return AppRoutes.login;
-      }
-
-      return null;
-    },
+    redirect: (context, state) => resolveRedirect(
+      location: state.matchedLocation,
+      status: auth.status,
+      isAdmin: auth.isAdmin,
+      isAwaitingApproval: auth.isAwaitingApproval,
+    ),
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.splash,
@@ -63,6 +121,19 @@ GoRouter buildRouter(AuthController auth) {
       GoRoute(
         path: AppRoutes.signup,
         pageBuilder: (context, state) => _slideUp(state, const SignupScreen()),
+      ),
+
+      // Outside the StatefulShellRoute below: each of these is the whole app
+      // for the person seeing it, so neither gets bottom navigation.
+      GoRoute(
+        path: AppRoutes.pendingApproval,
+        pageBuilder: (context, state) =>
+            _fade(state, const PendingApprovalScreen()),
+      ),
+      GoRoute(
+        path: AppRoutes.admin,
+        pageBuilder: (context, state) =>
+            _fade(state, const AdminDashboardScreen()),
       ),
 
       // Pushed above the shell so they cover the bottom navigation bar.

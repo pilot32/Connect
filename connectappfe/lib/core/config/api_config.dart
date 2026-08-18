@@ -16,6 +16,17 @@ class ApiConfig {
   static const String signup = '/auth/signup';
   static const String login = '/auth/login';
 
+  /// Authoritative account state. Unlike the token's `status` claim — frozen
+  /// at sign-in — this reflects the database, so it is how the app notices an
+  /// approval without making the user sign in again.
+  static const String authStatus = '/auth/status';
+
+  // ----------------------------------------------------------------- admin
+  static const String adminUsers = '/admin/users';
+  static String adminUser(String userId) => '/admin/users/$userId';
+  static String approveUser(String userId) => '/admin/users/$userId/approve';
+  static String rejectUser(String userId) => '/admin/users/$userId/reject';
+
   // --------------------------------------------------------------- profile
   static const String myProfile = '/profile/me';
   static String profileById(String userId) => '/profile/$userId';

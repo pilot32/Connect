@@ -2,6 +2,8 @@ import 'package:connectappfe/core/router/app_router.dart';
 import 'package:connectappfe/core/services/api_client.dart';
 import 'package:connectappfe/core/services/storage_service.dart';
 import 'package:connectappfe/core/theme/app_theme.dart';
+import 'package:connectappfe/features/admin/services/admin_service.dart';
+import 'package:connectappfe/features/admin/state/admin_controller.dart';
 import 'package:connectappfe/features/auth/services/auth_service.dart';
 import 'package:connectappfe/features/auth/state/auth_controller.dart';
 import 'package:connectappfe/features/connections/services/connections_service.dart';
@@ -38,6 +40,7 @@ class _ConnectAppState extends State<ConnectApp> {
     _apiClient,
   );
   late final FeedService _feedService = FeedService(_apiClient);
+  late final AdminService _adminService = AdminService(_apiClient);
 
   late final AuthController _auth = AuthController(
     authService: _authService,
@@ -53,6 +56,10 @@ class _ConnectAppState extends State<ConnectApp> {
   );
   late final FeedController _feed = FeedController(_feedService);
 
+  /// Constructed for every session, but inert until the admin console calls
+  /// `loadOnce()` — a regular user never triggers a request from it.
+  late final AdminController _admin = AdminController(_adminService);
+
   late final GoRouter _router = buildRouter(_auth);
 
   @override
@@ -64,6 +71,7 @@ class _ConnectAppState extends State<ConnectApp> {
 
   @override
   void dispose() {
+    _admin.dispose();
     _feed.dispose();
     _connections.dispose();
     _directory.dispose();
@@ -83,7 +91,9 @@ class _ConnectAppState extends State<ConnectApp> {
         Provider<DirectoryService>.value(value: _directoryService),
         Provider<ConnectionsService>.value(value: _connectionsService),
         Provider<FeedService>.value(value: _feedService),
+        Provider<AdminService>.value(value: _adminService),
         ChangeNotifierProvider<AuthController>.value(value: _auth),
+        ChangeNotifierProvider<AdminController>.value(value: _admin),
         ChangeNotifierProvider<ProfileController>.value(value: _profile),
         ChangeNotifierProvider<DirectoryController>.value(value: _directory),
         ChangeNotifierProvider<ConnectionsController>.value(
